@@ -6,3 +6,7 @@ docker run -p 4222:4222 -p 8222:8222 nats-streaming -m 8222 -cid 'my-cluster' -S
 
 Example here
 https://gist.github.com/aricart/0e0641468694ac451592765feea84835
+
+### Scaling node apps with nginx
+
+https://github.com/Maximization/scaling-nodejs-with-docker
