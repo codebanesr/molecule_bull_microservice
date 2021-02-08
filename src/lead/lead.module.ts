@@ -8,6 +8,7 @@ import { MulterModule } from "@nestjs/platform-express";
 import { AdminActionSchema } from "../user/schemas/admin-action.schema";
 import { UploadService } from "./upload.service";
 import { PushNotificationService } from "./push-notification.service";
+import { EmailService } from "../utils/sendMail";
 
 
 @Module({
@@ -22,7 +23,7 @@ import { PushNotificationService } from "./push-notification.service";
       { name: "AdminAction", schema: AdminActionSchema },
     ]),
   ],
-  providers: [LeadService, UploadService, PushNotificationService],
+  providers: [LeadService, UploadService, PushNotificationService, EmailService],
   controllers: [],
   exports: [
     LeadService, UploadService, PushNotificationService

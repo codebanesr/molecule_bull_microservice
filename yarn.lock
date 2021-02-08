@@ -1275,6 +1275,11 @@ acorn@^8.0.4:
   resolved "https://registry.yarnpkg.com/acorn/-/acorn-8.0.5.tgz#a3bfb872a74a6a7f661bc81b9849d9cac12601b7"
   integrity sha512-v+DieK/HJkJOpFBETDJioequtc3PfxsWMaxIdIwujtF7FEV/MAyDQLlm6/zPvr7Mix07mLh6ccVwIsloceodlg==
 
+addressparser@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/addressparser/-/addressparser-1.0.1.tgz#47afbe1a2a9262191db6838e4fd1d39b40821746"
+  integrity sha1-R6++GiqSYhkdtoOOT9HTm0CCF0Y=
+
 adler-32@~1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/adler-32/-/adler-32-1.2.0.tgz#6a3e6bf0a63900ba15652808cb15c6813d1a5f25"
@@ -4491,6 +4496,11 @@ makeerror@1.0.x:
   dependencies:
     tmpl "1.0.x"
 
+mandrill-api@^1.0.45:
+  version "1.0.45"
+  resolved "https://registry.yarnpkg.com/mandrill-api/-/mandrill-api-1.0.45.tgz#163939cf486bd18277b0f3baf412c3e65d84a72d"
+  integrity sha1-Fjk5z0hr0YJ3sPO69BLD5l2Epy0=
+
 map-cache@^0.2.2:
   version "0.2.2"
   resolved "https://registry.yarnpkg.com/map-cache/-/map-cache-0.2.2.tgz#c32abd0bd6525d9b051645bb4f26ac5dc98a0dbf"
@@ -4807,6 +4817,15 @@ node-releases@^1.1.70:
   version "1.1.70"
   resolved "https://registry.yarnpkg.com/node-releases/-/node-releases-1.1.70.tgz#66e0ed0273aa65666d7fe78febe7634875426a08"
   integrity sha512-Slf2s69+2/uAD79pVVQo8uSiC34+g8GWY8UH2Qtqv34ZfhYrxpYpfzs9Js9d6O0mbDmALuxaTlplnBTnSELcrw==
+
+nodemailer-mandrill-transport@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/nodemailer-mandrill-transport/-/nodemailer-mandrill-transport-1.2.0.tgz#69969029d259b46921cc12db70ca1551bf394b04"
+  integrity sha1-aZaQKdJZtGkhzBLbcMoVUb85SwQ=
+  dependencies:
+    addressparser "^1.0.1"
+    extend "^3.0.0"
+    mandrill-api "^1.0.45"
 
 nodemailer@^6.4.17:
   version "6.4.17"

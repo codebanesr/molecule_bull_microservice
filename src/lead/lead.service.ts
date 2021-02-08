@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, NativeError } from "mongoose";
 import { S3UploadedFiles } from "src/bull-queue/processors/lead-upload.interface";
@@ -8,10 +8,21 @@ import { IConfig } from "src/utils/renameJson";
 import { CampaignConfig } from "./interfaces/campaign-config.interface";
 import { Lead } from "./interfaces/lead.interface";
 import { utils, write } from "xlsx";
-import parseExcel from "src/utils/parseExcel";
+import parseExcel from "../utils/parseExcel";
 import { UploadService } from "./upload.service";
 import { PushNotificationService } from "./push-notification.service";
+import { EmailService } from "../utils/sendMail";
 
+
+interface LeadFileUpload {
+  files: S3UploadedFiles[],
+  campaignName: string,
+  uploader: string,
+  organization: string,
+  userId: string,
+  pushtoken: any,
+  campaignId: string
+}
 @Injectable()
 export class LeadService {
   constructor(
@@ -30,51 +41,44 @@ export class LeadService {
     private readonly s3UploadService: UploadService,
 
     private readonly pushNotificationService: PushNotificationService,
+
+    private emailService: EmailService
   ) {}
 
-
-  async uploadMultipleLeadFiles(
-    files: S3UploadedFiles[],
-    campaignName: string,
-    uploader: string,
-    organization: string,
-    userId: string,
-    pushtoken: any,
-    campaignId: string
-  ) {
-    const uniqueAttr = await this.campaignModel.findOne({_id: campaignId}, {uniqueCols: 1}).lean().exec();
-    const ccnfg = await this.campaignConfigModel.find({campaignId}, {readableField: 1, internalField: 1, _id: 0}).lean().exec();
+  async uploadMultipleLeadFiles(data: LeadFileUpload) {
+    const uniqueAttr = await this.campaignModel.findOne({_id: data.campaignId}, {uniqueCols: 1}).lean().exec();
+    const ccnfg = await this.campaignConfigModel.find({campaignId: data.campaignId}, {readableField: 1, internalField: 1, _id: 0}).lean().exec();
 
     if (!ccnfg) {
       throw new Error(
-        `Campaign with name ${campaignName} not found, create a campaign before uploading leads for that campaign`
+        `Campaign with name ${data.campaignName} not found, create a campaign before uploading leads for that campaign`
       );
     }
 
 
     await this.adminActionModel.create({
-      userid: userId,
-      organization,
+      userid: data.userId,
+      organization: data.organization,
       actionType: "lead",
-      filePath: files[0].Location,
+      filePath: data.files[0].Location,
       savedOn: "s3",
-      campaign: campaignId,
+      campaign: data.campaignId,
       fileType: "campaignConfig",
     });
 
     const result = await this.parseLeadFiles(
-      files,
+      data.files,
       ccnfg,
-      campaignName,
-      organization,
-      uploader,
-      userId,
-      pushtoken,
-      campaignId,
+      data.campaignName,
+      data.organization,
+      data.uploader,
+      data.userId,
+      data.pushtoken,
+      data.campaignId,
       uniqueAttr
     );
     // parse data here
-    return { files, result };
+    return { files: data.files, result };
   }
 
   async parseLeadFiles(
@@ -88,6 +92,12 @@ export class LeadService {
     campaignId: string,
     uniqueAttr: Partial<Campaign>
   ) {
+    this.emailService.sendMail({
+      to: 'shanur.cse.nitap@gmail.com',
+      subject: "Your file has been uploaded for processing ...",
+      text: "Sample text sent from amazon ses service"
+    });
+
     files.forEach(async (file) => {
       const jsonRes = await parseExcel(file.Location, ccnfg);
       await this.saveLeadsFromExcel(
@@ -119,33 +129,12 @@ export class LeadService {
     const updated = [];
     const error = [];
 
-    const leadColumns = await this.campaignConfigModel
-      .find({
-        name: campaignName,
-        organization,
-      })
-      .lean()
-      .exec();
 
     // const leadMappings = keyBy(leadColumns, "internalField");
     for (const lead of leads) {
-      // let contact = [];
-      // Object.keys(lead).forEach((key) => {
-      //   if (leadMappings[key].group === "contact") {
-      //     contact.push({
-      //       label: leadMappings[key].readableField,
-      //       value: lead[key],
-      //       // automating it for now even though it should come from the lead file, this logic should strictly be placed in the ui
-      //       // use a library like lodash to find if the value is an email or not
-      //       category: isString(lead[key]) && lead[key]?.indexOf("@") > 0 ? 'email': 'mobile'
-      //     });
-      //     delete lead[key];
-      //   }
-      // });
-
-      let findUniqueLeadQuery = {};
+      let findByQuery = {};
       uniqueAttr.uniqueCols.forEach(col=>{
-        findUniqueLeadQuery[col] = lead[col];
+        findByQuery[col] = lead[col];
       })
 
 
@@ -153,12 +142,12 @@ export class LeadService {
        * no need to convert it;; organization filter is not required since campaignId is mongoose id which is going to be unique
        * throughout
        */
-      findUniqueLeadQuery["campaignId"] = campaignId;
+      findByQuery["campaignId"] = campaignId;
 
+      Logger.debug(findByQuery);
       const { lastErrorObject, value } = await this.leadModel
         .findOneAndUpdate(
-          findUniqueLeadQuery,
-          // { ...lead, campaign: campaignName, contact, organization, uploader, campaignId },
+          findByQuery,
           { ...lead, campaign: campaignName, organization, uploader, campaignId },
           { new: true, upsert: true, rawResult: true }
         )
@@ -201,7 +190,7 @@ export class LeadService {
         campaign: campaignId
     })
 
-    await this.pushNotificationService.sendPushNotification(pushtoken, {
+    this.pushNotificationService.sendPushNotification(pushtoken, {
       notification: {
         title: "File Upload Complete",
         icon: `https://cdn3.vectorstock.com/i/1000x1000/94/72/cute-black-cat-icon-vector-13499472.jpg`,
@@ -209,6 +198,10 @@ export class LeadService {
         tag: "some random tag",
         badge: `https://e7.pngegg.com/pngimages/564/873/png-clipart-computer-icons-education-molecule-icon-structure-area.png`,
       },
+    }).then(result=>{
+      Logger.debug("successfully notified user");
+    }, error=>{
+      Logger.debug("Failed to notified user about file upload");
     });
     return result;
   }

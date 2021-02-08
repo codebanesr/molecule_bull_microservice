@@ -1,30 +1,33 @@
 import { createTransport, SendMailOptions } from "nodemailer";
+import { Injectable } from "@nestjs/common";
 
-export const sendEmail = (
-  email: string,
-  subject: string,
-  text: string,
-  attachments?: any
-) => {
-  const transporter = createTransport({
-    service: "SendGrid",
-    auth: {
-      user: process.env.SENDGRID_USER,
-      pass: process.env.SENDGRID_PASSWORD,
-    },
-  });
-  const mailOptions: SendMailOptions = {
-    to: email,
-    from: "shanur.rahman@gamechangesns.com",
-    subject: "Reset your password on Molecule",
-    text: `Hi there this is a campaign email`,
-    attachments: attachments,
-  };
-  transporter.sendMail(mailOptions, (err) => {
-    if (err) {
-      console.log(err);
-    } else {
-      console.log("email sent to ", email);
-    }
-  });
-};
+@Injectable()
+export class EmailService {
+  sendMail(options: SendMailOptions) {
+    const transporter = createTransport({
+      // pool: true,
+      host: "email-smtp.ap-south-1.amazonaws.com",
+      port: 587,
+      secure: false, // use TLS
+      auth: {
+        user: "AKIARGBOXP35JVPETBOW",
+        pass: "BDABocMfTh7ONWhD9Xh9tHSvAtsOC9vT4eL/YF5TI1/g"
+      }
+    });
+    const mailOptions: SendMailOptions = {
+      to: options.to,
+      from: options.from || 'shanur.cse.nitap@gmail.com',
+      subject: options.subject,
+      text: options.text,
+      attachments: options.attachments,
+    };
+    transporter.sendMail(mailOptions, (err) => {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log("email sent to ", options.to);
+      }
+    });
+    return true;
+  }
+}
