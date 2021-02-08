@@ -5,7 +5,7 @@ import { BullQueueModule } from './bull-queue/bull-queue.module';
 @Module({
   imports: [
     BullQueueModule,
-    MongooseModule.forRoot(process.env.MONGODB_URI),
+    MongooseModule.forRoot(process.env.MONGODB_URI, {useNewUrlParser: true}),
   ],
   controllers: [],
   providers: [],
