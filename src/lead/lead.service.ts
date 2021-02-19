@@ -115,7 +115,7 @@ export class LeadService {
   }
 
   async saveLeadsFromExcel(
-    leads: any[],
+    leads: Lead[],
     campaignName: string,
     originalFileName: string,
     organization: string,

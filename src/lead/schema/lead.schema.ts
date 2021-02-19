@@ -1,4 +1,5 @@
 import { Schema } from "mongoose";
+import validator from "validator";
 
 export const LeadSchema = new Schema(
   {
@@ -29,7 +30,17 @@ export const LeadSchema = new Schema(
     pincode: Number,
     nextAction: String,
     organization: { type: Schema.Types.ObjectId, ref: "Organization" },
-    documentLinks: [String]
+    documentLinks: [String],
+    mobilePhone: {
+      type: String,
+      unique: true,
+      validate: validator.isMobilePhone,
+      required: true
+    },
+    isPristine: {
+      type: Boolean,
+      default: true
+    }
   },
   {
     timestamps: true,
