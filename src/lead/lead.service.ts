@@ -45,8 +45,15 @@ export class LeadService {
     private emailService: EmailService
   ) {}
 
+
+  private logger = new Logger(LeadService.name, true);
+
   async uploadMultipleLeadFiles(data: LeadFileUpload) {
+    this.logger.debug({campaignId: data.campaignId});
     const uniqueAttr = await this.campaignModel.findOne({_id: data.campaignId}, {uniqueCols: 1}).lean().exec();
+
+
+    this.logger.debug({uniqueAttr})
     const ccnfg = await this.campaignConfigModel.find({campaignId: data.campaignId}, {readableField: 1, internalField: 1, _id: 0}).lean().exec();
 
     if (!ccnfg) {
@@ -54,7 +61,6 @@ export class LeadService {
         `Campaign with name ${data.campaignName} not found, create a campaign before uploading leads for that campaign`
       );
     }
-
 
     await this.adminActionModel.create({
       userid: data.userId,
@@ -65,6 +71,9 @@ export class LeadService {
       campaign: data.campaignId,
       fileType: "campaignConfig",
     });
+
+
+    this.logger.debug("Saving this action to adminActions model");
 
     const result = await this.parseLeadFiles(
       data.files,
@@ -77,6 +86,9 @@ export class LeadService {
       data.campaignId,
       uniqueAttr
     );
+
+
+    this.logger.debug("Lead files parsed successfully");
     // parse data here
     return { files: data.files, result };
   }
@@ -98,6 +110,7 @@ export class LeadService {
       text: "Sample text sent from amazon ses service"
     });
 
+    this.logger.debug("Received file for processing");
     files.forEach(async (file) => {
       const jsonRes = await parseExcel(file.Location, ccnfg);
       await this.saveLeadsFromExcel(
@@ -144,7 +157,7 @@ export class LeadService {
        */
       findByQuery["campaignId"] = campaignId;
 
-      Logger.debug(findByQuery);
+      this.logger.debug(findByQuery);
       const { lastErrorObject, value } = await this.leadModel
         .findOneAndUpdate(
           findByQuery,
@@ -177,8 +190,10 @@ export class LeadService {
     });
 
     const fileName = `result-${originalFileName}`;
+    Logger.debug("Generated result file and store it to ", fileName);
     const result = await this.s3UploadService.uploadFileBuffer(fileName, wbOut);
-
+    this.logger.error("Uploaded result file to s3");
+    
 
     await this.adminActionModel.create({
         userid: uploaderId,
@@ -199,9 +214,9 @@ export class LeadService {
         badge: `https://e7.pngegg.com/pngimages/564/873/png-clipart-computer-icons-education-molecule-icon-structure-area.png`,
       },
     }).then(result=>{
-      Logger.debug("successfully notified user");
+      this.logger.verbose("successfully notified user");
     }, error=>{
-      Logger.debug("Failed to notified user about file upload");
+      this.logger.error("Failed to notified user about file upload");
     });
     return result;
   }

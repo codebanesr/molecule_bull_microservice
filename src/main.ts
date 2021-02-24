@@ -7,7 +7,10 @@ config();
 
 async function bootstrap() {
   // hybrid microservice and web application
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: ['debug']
+  });
+
   app.listen(process.env.BULL_APP_PORT)
 }
 bootstrap();
