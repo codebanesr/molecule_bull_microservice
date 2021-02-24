@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
+var LeadService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LeadService = void 0;
 const common_1 = require("@nestjs/common");
@@ -25,7 +26,7 @@ const parseExcel_1 = require("../utils/parseExcel");
 const upload_service_1 = require("./upload.service");
 const push_notification_service_1 = require("./push-notification.service");
 const sendMail_1 = require("../utils/sendMail");
-let LeadService = class LeadService {
+let LeadService = LeadService_1 = class LeadService {
     constructor(leadModel, adminActionModel, campaignConfigModel, campaignModel, s3UploadService, pushNotificationService, emailService) {
         this.leadModel = leadModel;
         this.adminActionModel = adminActionModel;
@@ -34,9 +35,12 @@ let LeadService = class LeadService {
         this.s3UploadService = s3UploadService;
         this.pushNotificationService = pushNotificationService;
         this.emailService = emailService;
+        this.logger = new common_1.Logger(LeadService_1.name, true);
     }
     async uploadMultipleLeadFiles(data) {
+        this.logger.debug({ campaignId: data.campaignId });
         const uniqueAttr = await this.campaignModel.findOne({ _id: data.campaignId }, { uniqueCols: 1 }).lean().exec();
+        this.logger.debug({ uniqueAttr });
         const ccnfg = await this.campaignConfigModel.find({ campaignId: data.campaignId }, { readableField: 1, internalField: 1, _id: 0 }).lean().exec();
         if (!ccnfg) {
             throw new Error(`Campaign with name ${data.campaignName} not found, create a campaign before uploading leads for that campaign`);
@@ -50,7 +54,9 @@ let LeadService = class LeadService {
             campaign: data.campaignId,
             fileType: "campaignConfig",
         });
+        this.logger.debug("Saving this action to adminActions model");
         const result = await this.parseLeadFiles(data.files, ccnfg, data.campaignName, data.organization, data.uploader, data.userId, data.pushtoken, data.campaignId, uniqueAttr);
+        this.logger.debug("Lead files parsed successfully");
         return { files: data.files, result };
     }
     async parseLeadFiles(files, ccnfg, campaignName, organization, uploader, uploaderId, pushtoken, campaignId, uniqueAttr) {
@@ -59,6 +65,7 @@ let LeadService = class LeadService {
             subject: "Your file has been uploaded for processing ...",
             text: "Sample text sent from amazon ses service"
         });
+        this.logger.debug("Received file for processing");
         files.forEach(async (file) => {
             const jsonRes = await parseExcel_1.default(file.Location, ccnfg);
             await this.saveLeadsFromExcel(jsonRes, campaignName, file.Key, organization, uploader, uploaderId, pushtoken, campaignId, uniqueAttr);
@@ -74,7 +81,7 @@ let LeadService = class LeadService {
                 findByQuery[col] = lead[col];
             });
             findByQuery["campaignId"] = campaignId;
-            common_1.Logger.debug(findByQuery);
+            this.logger.debug(findByQuery);
             const { lastErrorObject, value } = await this.leadModel
                 .findOneAndUpdate(findByQuery, Object.assign(Object.assign({}, lead), { campaign: campaignName, organization, uploader, campaignId }), { new: true, upsert: true, rawResult: true })
                 .lean()
@@ -99,7 +106,9 @@ let LeadService = class LeadService {
             type: "buffer",
         });
         const fileName = `result-${originalFileName}`;
+        common_1.Logger.debug("Generated result file and store it to ", fileName);
         const result = await this.s3UploadService.uploadFileBuffer(fileName, wbOut);
+        this.logger.error("Uploaded result file to s3");
         await this.adminActionModel.create({
             userid: uploaderId,
             organization,
@@ -118,14 +127,14 @@ let LeadService = class LeadService {
                 badge: `https://e7.pngegg.com/pngimages/564/873/png-clipart-computer-icons-education-molecule-icon-structure-area.png`,
             },
         }).then(result => {
-            common_1.Logger.debug("successfully notified user");
+            this.logger.verbose("successfully notified user");
         }, error => {
-            common_1.Logger.debug("Failed to notified user about file upload");
+            this.logger.error("Failed to notified user about file upload");
         });
         return result;
     }
 };
-LeadService = __decorate([
+LeadService = LeadService_1 = __decorate([
     common_1.Injectable(),
     __param(0, mongoose_1.InjectModel("Lead")),
     __param(1, mongoose_1.InjectModel("AdminAction")),

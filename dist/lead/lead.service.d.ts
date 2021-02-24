@@ -26,11 +26,12 @@ export declare class LeadService {
     private readonly pushNotificationService;
     private emailService;
     constructor(leadModel: Model<Lead>, adminActionModel: Model<AdminAction>, campaignConfigModel: Model<CampaignConfig>, campaignModel: Model<Campaign>, s3UploadService: UploadService, pushNotificationService: PushNotificationService, emailService: EmailService);
+    private logger;
     uploadMultipleLeadFiles(data: LeadFileUpload): Promise<{
         files: S3UploadedFiles[];
         result: void;
     }>;
     parseLeadFiles(files: S3UploadedFiles[], ccnfg: IConfig[], campaignName: string, organization: string, uploader: string, uploaderId: string, pushtoken: string, campaignId: string, uniqueAttr: Partial<Campaign>): Promise<void>;
-    saveLeadsFromExcel(leads: any[], campaignName: string, originalFileName: string, organization: string, uploader: string, uploaderId: string, pushtoken: any, campaignId: string, uniqueAttr: Partial<Campaign>): Promise<any>;
+    saveLeadsFromExcel(leads: Lead[], campaignName: string, originalFileName: string, organization: string, uploader: string, uploaderId: string, pushtoken: any, campaignId: string, uniqueAttr: Partial<Campaign>): Promise<any>;
 }
 export {};
