@@ -43,10 +43,10 @@ let LeadService = LeadService_1 = class LeadService {
     async uploadMultipleLeadFiles(data) {
         this.logger.debug({ campaignId: data.campaignId });
         const uniqueAttr = await this.campaignModel.findOne({ _id: data.campaignId }, { uniqueCols: 1 }).lean().exec();
-        this.alertsGateway.sendMessageToClient({ room: data.userId, text: "File upload started" });
+        this.alertsGateway.sendMessageToClient({ room: data.uploader, text: "File upload started" });
         if (!uniqueAttr) {
             this.alertsGateway.sendMessageToClient({
-                room: data.userId,
+                room: data.uploader,
                 text: "No unique attribute found, please check unique cols section of campaign configuration"
             });
             throw new common_1.NotAcceptableException(null, 'No unique attribute found, please check unique cols section of campaign configuration');
@@ -128,7 +128,7 @@ let LeadService = LeadService_1 = class LeadService {
             fileType: "lead",
             campaign: campaignId
         });
-        this.alertsGateway.sendMessageToClient({ room: uploaderId, text: "Your file has been successfully uploaded" });
+        this.alertsGateway.sendMessageToClient({ room: uploader, text: "Your file has been successfully uploaded" });
         this.pushNotificationService.sendPushNotification(pushtoken, {
             notification: {
                 title: "File Upload Complete",
