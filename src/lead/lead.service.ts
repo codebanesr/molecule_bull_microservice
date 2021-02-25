@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, NotAcceptableException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model, NativeError } from "mongoose";
 import { S3UploadedFiles } from "src/bull-queue/processors/lead-upload.interface";
@@ -12,6 +12,8 @@ import parseExcel from "../utils/parseExcel";
 import { UploadService } from "./upload.service";
 import { PushNotificationService } from "./push-notification.service";
 import { EmailService } from "../utils/sendMail";
+import { AlertsGateway } from "src/socks/alerts.gateway";
+import { UserActivityDto } from "src/user/dto/user-activity.dto";
 
 
 interface LeadFileUpload {
@@ -42,7 +44,10 @@ export class LeadService {
 
     private readonly pushNotificationService: PushNotificationService,
 
-    private emailService: EmailService
+    private emailService: EmailService,
+
+
+    private alertsGateway: AlertsGateway
   ) {}
 
 
@@ -52,8 +57,16 @@ export class LeadService {
     this.logger.debug({campaignId: data.campaignId});
     const uniqueAttr = await this.campaignModel.findOne({_id: data.campaignId}, {uniqueCols: 1}).lean().exec();
 
+    this.alertsGateway.sendMessageToClient({room: data.userId, text: "File upload started"});
+    if(!uniqueAttr) {
+      this.alertsGateway.sendMessageToClient({
+        room: data.userId,
+        text: "No unique attribute found, please check unique cols section of campaign configuration"
+      });
 
-    this.logger.debug({uniqueAttr})
+      throw new NotAcceptableException(null, 'No unique attribute found, please check unique cols section of campaign configuration');
+    }
+
     const ccnfg = await this.campaignConfigModel.find({campaignId: data.campaignId}, {readableField: 1, internalField: 1, _id: 0}).lean().exec();
 
     if (!ccnfg) {
@@ -104,13 +117,14 @@ export class LeadService {
     campaignId: string,
     uniqueAttr: Partial<Campaign>
   ) {
-    this.emailService.sendMail({
+
+    !process.env.testing && this.emailService.sendMail({
       to: 'shanur.cse.nitap@gmail.com',
       subject: "Your file has been uploaded for processing ...",
       text: "Sample text sent from amazon ses service"
     });
 
-    this.logger.debug("Received file for processing");
+    this.alertsGateway.sendMessageToClient({room: uploaderId, text: "Received file for processing"});
     files.forEach(async (file) => {
       const jsonRes = await parseExcel(file.Location, ccnfg);
       await this.saveLeadsFromExcel(
@@ -203,7 +217,10 @@ export class LeadService {
         savedOn: "s3",
         fileType: "lead",
         campaign: campaignId
-    })
+    });
+
+
+    this.alertsGateway.sendMessageToClient({room: uploaderId, text: "Your file has been successfully uploaded"});
 
     this.pushNotificationService.sendPushNotification(pushtoken, {
       notification: {
