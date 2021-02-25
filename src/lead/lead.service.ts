@@ -57,10 +57,10 @@ export class LeadService {
     this.logger.debug({campaignId: data.campaignId});
     const uniqueAttr = await this.campaignModel.findOne({_id: data.campaignId}, {uniqueCols: 1}).lean().exec();
 
-    this.alertsGateway.sendMessageToClient({room: data.userId, text: "File upload started"});
+    this.alertsGateway.sendMessageToClient({room: data.uploader, text: "File upload started"});
     if(!uniqueAttr) {
       this.alertsGateway.sendMessageToClient({
-        room: data.userId,
+        room: data.uploader,
         text: "No unique attribute found, please check unique cols section of campaign configuration"
       });
 
@@ -124,7 +124,7 @@ export class LeadService {
       text: "Sample text sent from amazon ses service"
     });
 
-    this.alertsGateway.sendMessageToClient({room: uploaderId, text: "Received file for processing"});
+    this.alertsGateway.sendMessageToClient({room: uploader, text: "Received file for processing"});
     files.forEach(async (file) => {
       const jsonRes = await parseExcel(file.Location, ccnfg);
       await this.saveLeadsFromExcel(
@@ -220,7 +220,7 @@ export class LeadService {
     });
 
 
-    this.alertsGateway.sendMessageToClient({room: uploaderId, text: "Your file has been successfully uploaded"});
+    this.alertsGateway.sendMessageToClient({room: uploader, text: "Your file has been successfully uploaded"});
 
     this.pushNotificationService.sendPushNotification(pushtoken, {
       notification: {

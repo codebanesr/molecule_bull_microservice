@@ -19,6 +19,7 @@ export class AlertsGateway implements OnGatewayInit, OnGatewayDisconnect {
 
     // this method will be used by microservice to convey to the frontend the status of the file
     sendMessageToClient(message: { room: string, text: string }) {
+        this.logger.debug(`sending message to client, ${message.room}, ${message.text}`);
         this.wss.to(message.room).emit('chatToClient', message.text);
     }
 
