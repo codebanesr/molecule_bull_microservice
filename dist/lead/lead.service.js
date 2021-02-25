@@ -26,8 +26,10 @@ const parseExcel_1 = require("../utils/parseExcel");
 const upload_service_1 = require("./upload.service");
 const push_notification_service_1 = require("./push-notification.service");
 const sendMail_1 = require("../utils/sendMail");
+const alerts_gateway_1 = require("../socks/alerts.gateway");
+const user_activity_dto_1 = require("../user/dto/user-activity.dto");
 let LeadService = LeadService_1 = class LeadService {
-    constructor(leadModel, adminActionModel, campaignConfigModel, campaignModel, s3UploadService, pushNotificationService, emailService) {
+    constructor(leadModel, adminActionModel, campaignConfigModel, campaignModel, s3UploadService, pushNotificationService, emailService, alertsGateway) {
         this.leadModel = leadModel;
         this.adminActionModel = adminActionModel;
         this.campaignConfigModel = campaignConfigModel;
@@ -35,12 +37,20 @@ let LeadService = LeadService_1 = class LeadService {
         this.s3UploadService = s3UploadService;
         this.pushNotificationService = pushNotificationService;
         this.emailService = emailService;
+        this.alertsGateway = alertsGateway;
         this.logger = new common_1.Logger(LeadService_1.name, true);
     }
     async uploadMultipleLeadFiles(data) {
         this.logger.debug({ campaignId: data.campaignId });
         const uniqueAttr = await this.campaignModel.findOne({ _id: data.campaignId }, { uniqueCols: 1 }).lean().exec();
-        this.logger.debug({ uniqueAttr });
+        this.alertsGateway.sendMessageToClient({ room: data.userId, text: "File upload started" });
+        if (!uniqueAttr) {
+            this.alertsGateway.sendMessageToClient({
+                room: data.userId,
+                text: "No unique attribute found, please check unique cols section of campaign configuration"
+            });
+            throw new common_1.NotAcceptableException(null, 'No unique attribute found, please check unique cols section of campaign configuration');
+        }
         const ccnfg = await this.campaignConfigModel.find({ campaignId: data.campaignId }, { readableField: 1, internalField: 1, _id: 0 }).lean().exec();
         if (!ccnfg) {
             throw new Error(`Campaign with name ${data.campaignName} not found, create a campaign before uploading leads for that campaign`);
@@ -60,12 +70,12 @@ let LeadService = LeadService_1 = class LeadService {
         return { files: data.files, result };
     }
     async parseLeadFiles(files, ccnfg, campaignName, organization, uploader, uploaderId, pushtoken, campaignId, uniqueAttr) {
-        this.emailService.sendMail({
+        !process.env.testing && this.emailService.sendMail({
             to: 'shanur.cse.nitap@gmail.com',
             subject: "Your file has been uploaded for processing ...",
             text: "Sample text sent from amazon ses service"
         });
-        this.logger.debug("Received file for processing");
+        this.alertsGateway.sendMessageToClient({ room: uploaderId, text: "Received file for processing" });
         files.forEach(async (file) => {
             const jsonRes = await parseExcel_1.default(file.Location, ccnfg);
             await this.saveLeadsFromExcel(jsonRes, campaignName, file.Key, organization, uploader, uploaderId, pushtoken, campaignId, uniqueAttr);
@@ -118,6 +128,7 @@ let LeadService = LeadService_1 = class LeadService {
             fileType: "lead",
             campaign: campaignId
         });
+        this.alertsGateway.sendMessageToClient({ room: uploaderId, text: "Your file has been successfully uploaded" });
         this.pushNotificationService.sendPushNotification(pushtoken, {
             notification: {
                 title: "File Upload Complete",
@@ -146,7 +157,8 @@ LeadService = LeadService_1 = __decorate([
         mongoose_2.Model,
         upload_service_1.UploadService,
         push_notification_service_1.PushNotificationService,
-        sendMail_1.EmailService])
+        sendMail_1.EmailService,
+        alerts_gateway_1.AlertsGateway])
 ], LeadService);
 exports.LeadService = LeadService;
 //# sourceMappingURL=lead.service.js.map

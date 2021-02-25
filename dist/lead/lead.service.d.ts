@@ -8,6 +8,7 @@ import { Lead } from "./interfaces/lead.interface";
 import { UploadService } from "./upload.service";
 import { PushNotificationService } from "./push-notification.service";
 import { EmailService } from "../utils/sendMail";
+import { AlertsGateway } from "src/socks/alerts.gateway";
 interface LeadFileUpload {
     files: S3UploadedFiles[];
     campaignName: string;
@@ -25,7 +26,8 @@ export declare class LeadService {
     private readonly s3UploadService;
     private readonly pushNotificationService;
     private emailService;
-    constructor(leadModel: Model<Lead>, adminActionModel: Model<AdminAction>, campaignConfigModel: Model<CampaignConfig>, campaignModel: Model<Campaign>, s3UploadService: UploadService, pushNotificationService: PushNotificationService, emailService: EmailService);
+    private alertsGateway;
+    constructor(leadModel: Model<Lead>, adminActionModel: Model<AdminAction>, campaignConfigModel: Model<CampaignConfig>, campaignModel: Model<Campaign>, s3UploadService: UploadService, pushNotificationService: PushNotificationService, emailService: EmailService, alertsGateway: AlertsGateway);
     private logger;
     uploadMultipleLeadFiles(data: LeadFileUpload): Promise<{
         files: S3UploadedFiles[];

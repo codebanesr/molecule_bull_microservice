@@ -18,6 +18,7 @@ const admin_action_schema_1 = require("../user/schemas/admin-action.schema");
 const upload_service_1 = require("./upload.service");
 const push_notification_service_1 = require("./push-notification.service");
 const sendMail_1 = require("../utils/sendMail");
+const alerts_gateway_1 = require("../socks/alerts.gateway");
 let LeadModule = class LeadModule {
 };
 LeadModule = __decorate([
@@ -33,7 +34,13 @@ LeadModule = __decorate([
                 { name: "AdminAction", schema: admin_action_schema_1.AdminActionSchema },
             ]),
         ],
-        providers: [lead_service_1.LeadService, upload_service_1.UploadService, push_notification_service_1.PushNotificationService, sendMail_1.EmailService],
+        providers: [
+            lead_service_1.LeadService,
+            upload_service_1.UploadService,
+            push_notification_service_1.PushNotificationService,
+            sendMail_1.EmailService,
+            alerts_gateway_1.AlertsGateway
+        ],
         controllers: [],
         exports: [
             lead_service_1.LeadService, upload_service_1.UploadService, push_notification_service_1.PushNotificationService

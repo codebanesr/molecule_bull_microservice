@@ -9,6 +9,7 @@ import { AdminActionSchema } from "../user/schemas/admin-action.schema";
 import { UploadService } from "./upload.service";
 import { PushNotificationService } from "./push-notification.service";
 import { EmailService } from "../utils/sendMail";
+import { AlertsGateway } from "../socks/alerts.gateway";
 
 
 @Module({
@@ -23,7 +24,13 @@ import { EmailService } from "../utils/sendMail";
       { name: "AdminAction", schema: AdminActionSchema },
     ]),
   ],
-  providers: [LeadService, UploadService, PushNotificationService, EmailService],
+  providers: [
+    LeadService, 
+    UploadService, 
+    PushNotificationService, 
+    EmailService,
+    AlertsGateway
+  ],
   controllers: [],
   exports: [
     LeadService, UploadService, PushNotificationService
