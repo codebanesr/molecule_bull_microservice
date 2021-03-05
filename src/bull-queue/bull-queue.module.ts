@@ -19,12 +19,16 @@ loadEnvConfig();
        * and as an argument to decorators to associate consumer classes and listeners with queues.
       */
       name: 'leadQ',
+      defaultJobOptions: {
+        removeOnComplete: true,
+        attempts: 2
+      },
       redis: {
         name: 'BullQueueWorker',
         host: process.env.BULL_REDIS_URL,
         port: +process.env.BULL_REDIS_PORT,
         password: process.env.BULL_REDIS_PASSWORD
-      }
+      },
     }),
     LeadModule,
     MongooseModule.forFeature([
