@@ -14,7 +14,11 @@ exports.LeadSchema = new mongoose_1.Schema({
         },
     ],
     campaign: String,
-    campaignId: { type: mongoose_1.Schema.Types.ObjectId, ref: "Campaign" },
+    campaignId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: "Campaign",
+        required: true
+    },
     firstName: String,
     lastName: String,
     fullName: String,
@@ -33,7 +37,6 @@ exports.LeadSchema = new mongoose_1.Schema({
         type: String,
         unique: true,
         validate: validator_1.default.isMobilePhone,
-        required: true
     },
     isPristine: {
         type: Boolean,
@@ -44,5 +47,13 @@ exports.LeadSchema = new mongoose_1.Schema({
     autoIndex: true,
     strict: false,
 });
-exports.LeadSchema.index({ "$**": "text" });
+exports.LeadSchema.index({
+    firstName: "text",
+    lastName: "text",
+    address: "text",
+    fullName: "text",
+    email: "text",
+    companyName: "text"
+});
+exports.LeadSchema.index({ campaignId: 1, mobilePhone: 1 }, { unique: true });
 //# sourceMappingURL=lead.schema.js.map

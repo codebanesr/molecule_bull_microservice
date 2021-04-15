@@ -25,12 +25,16 @@ BullQueueModule = __decorate([
         imports: [
             bull_1.BullModule.registerQueue({
                 name: 'leadQ',
+                defaultJobOptions: {
+                    removeOnComplete: true,
+                    attempts: 2
+                },
                 redis: {
                     name: 'BullQueueWorker',
                     host: process.env.BULL_REDIS_URL,
                     port: +process.env.BULL_REDIS_PORT,
                     password: process.env.BULL_REDIS_PASSWORD
-                }
+                },
             }),
             lead_module_1.LeadModule,
             mongoose_1.MongooseModule.forFeature([

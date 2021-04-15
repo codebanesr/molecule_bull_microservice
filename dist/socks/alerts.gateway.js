@@ -25,6 +25,7 @@ let AlertsGateway = AlertsGateway_1 = class AlertsGateway {
         this.logger.debug("Initialized");
     }
     sendMessageToClient(message) {
+        this.logger.debug(`sending message to client, ${message.room}, ${message.text}`);
         this.wss.to(message.room).emit('chatToClient', message.text);
     }
     handleRoomJoin(client, room) {
