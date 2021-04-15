@@ -42,40 +42,53 @@ let LeadService = LeadService_1 = class LeadService {
     }
     async uploadMultipleLeadFiles(data) {
         this.logger.debug({ campaignId: data.campaignId });
-        const uniqueAttr = await this.campaignModel.findOne({ _id: data.campaignId }, { uniqueCols: 1 }).lean().exec();
-        this.alertsGateway.sendMessageToClient({ room: data.uploader, text: "File upload started" });
+        const uniqueAttr = await this.campaignModel
+            .findOne({ _id: data.campaignId }, { uniqueCols: 1 })
+            .lean()
+            .exec();
+        this.alertsGateway.sendMessageToClient({
+            room: data.uploader,
+            text: 'File upload started',
+        });
         if (!uniqueAttr) {
             this.alertsGateway.sendMessageToClient({
                 room: data.uploader,
-                text: "No unique attribute found, please check unique cols section of campaign configuration"
+                text: 'No unique attribute found, please check unique cols section of campaign configuration',
             });
             throw new common_1.NotAcceptableException(null, 'No unique attribute found, please check unique cols section of campaign configuration');
         }
-        const ccnfg = await this.campaignConfigModel.find({ campaignId: data.campaignId }, { readableField: 1, internalField: 1, _id: 0 }).lean().exec();
+        const ccnfg = await this.campaignConfigModel
+            .find({ campaignId: data.campaignId }, { readableField: 1, internalField: 1, _id: 0 })
+            .lean()
+            .exec();
         if (!ccnfg) {
             throw new Error(`Campaign with name ${data.campaignName} not found, create a campaign before uploading leads for that campaign`);
         }
         await this.adminActionModel.create({
             userid: data.userId,
             organization: data.organization,
-            actionType: "lead",
+            actionType: 'lead',
             filePath: data.files[0].Location,
-            savedOn: "s3",
+            savedOn: 's3',
             campaign: data.campaignId,
-            fileType: "campaignConfig",
+            fileType: 'campaignConfig',
         });
-        this.logger.debug("Saving this action to adminActions model");
+        this.logger.debug('Saving this action to adminActions model');
         const result = await this.parseLeadFiles(data.files, ccnfg, data.campaignName, data.organization, data.uploader, data.userId, data.pushtoken, data.campaignId, uniqueAttr);
-        this.logger.debug("Lead files parsed successfully");
+        this.logger.debug('Lead files parsed successfully');
         return { files: data.files, result };
     }
     async parseLeadFiles(files, ccnfg, campaignName, organization, uploader, uploaderId, pushtoken, campaignId, uniqueAttr) {
-        !process.env.testing && this.emailService.sendMail({
-            to: 'shanur.cse.nitap@gmail.com',
-            subject: "Your file has been uploaded for processing ...",
-            text: "Sample text sent from amazon ses service"
+        !process.env.testing &&
+            this.emailService.sendMail({
+                to: 'shanur.cse.nitap@gmail.com',
+                subject: 'Your file has been uploaded for processing ...',
+                text: 'Sample text sent from amazon ses service',
+            });
+        this.alertsGateway.sendMessageToClient({
+            room: uploader,
+            text: 'Received file for processing',
         });
-        this.alertsGateway.sendMessageToClient({ room: uploaderId, text: "Received file for processing" });
         files.forEach(async (file) => {
             const jsonRes = await parseExcel_1.default(file.Location, ccnfg);
             await this.saveLeadsFromExcel(jsonRes, campaignName, file.Key, organization, uploader, uploaderId, pushtoken, campaignId, uniqueAttr);
@@ -90,10 +103,12 @@ let LeadService = LeadService_1 = class LeadService {
             uniqueAttr.uniqueCols.forEach(col => {
                 findByQuery[col] = lead[col];
             });
-            findByQuery["campaignId"] = campaignId;
+            findByQuery['campaignId'] = campaignId;
             this.logger.debug(findByQuery);
             const { lastErrorObject, value } = await this.leadModel
-                .findOneAndUpdate(findByQuery, Object.assign(Object.assign({}, lead), { campaign: campaignName, organization, uploader, campaignId }), { new: true, upsert: true, rawResult: true })
+                .findOneAndUpdate(findByQuery, Object.assign(Object.assign({}, lead), { campaign: campaignName, organization,
+                uploader,
+                campaignId }), { new: true, upsert: true, rawResult: true })
                 .lean()
                 .exec();
             if (lastErrorObject.updatedExisting === true) {
@@ -109,48 +124,84 @@ let LeadService = LeadService_1 = class LeadService {
         const created_ws = xlsx_1.utils.json_to_sheet(created);
         const updated_ws = xlsx_1.utils.json_to_sheet(updated);
         const wb = xlsx_1.utils.book_new();
-        xlsx_1.utils.book_append_sheet(wb, updated_ws, "tickets updated");
-        xlsx_1.utils.book_append_sheet(wb, created_ws, "tickets created");
+        xlsx_1.utils.book_append_sheet(wb, updated_ws, 'tickets updated');
+        xlsx_1.utils.book_append_sheet(wb, created_ws, 'tickets created');
         const wbOut = xlsx_1.write(wb, {
-            bookType: "xlsx",
-            type: "buffer",
+            bookType: 'xlsx',
+            type: 'buffer',
         });
         const fileName = `result-${originalFileName}`;
-        common_1.Logger.debug("Generated result file and store it to ", fileName);
+        common_1.Logger.debug('Generated result file and store it to ', fileName);
         const result = await this.s3UploadService.uploadFileBuffer(fileName, wbOut);
-        this.logger.error("Uploaded result file to s3");
+        this.logger.error('Uploaded result file to s3');
         await this.adminActionModel.create({
             userid: uploaderId,
             organization,
-            actionType: "lead",
+            actionType: 'lead',
             filePath: result.Location,
-            savedOn: "s3",
-            fileType: "lead",
-            campaign: campaignId
+            savedOn: 's3',
+            fileType: 'lead',
+            campaign: campaignId,
         });
-        this.alertsGateway.sendMessageToClient({ room: uploader, text: "Your file has been successfully uploaded" });
-        this.pushNotificationService.sendPushNotification(pushtoken, {
+        this.alertsGateway.sendMessageToClient({
+            room: uploader,
+            text: 'Your file has been successfully uploaded',
+        });
+        this.pushNotificationService
+            .sendPushNotification(pushtoken, {
             notification: {
-                title: "File Upload Complete",
+                title: 'File Upload Complete',
                 icon: `https://cdn3.vectorstock.com/i/1000x1000/94/72/cute-black-cat-icon-vector-13499472.jpg`,
                 body: `please visit ${result.Location} for the result`,
-                tag: "some random tag",
+                tag: 'some random tag',
                 badge: `https://e7.pngegg.com/pngimages/564/873/png-clipart-computer-icons-education-molecule-icon-structure-area.png`,
             },
-        }).then(result => {
-            this.logger.verbose("successfully notified user");
+        })
+            .then(result => {
+            this.logger.verbose('successfully notified user');
         }, error => {
-            this.logger.error("Failed to notified user about file upload");
+            this.logger.error('Failed to notified user about file upload');
         });
         return result;
+    }
+    async distributeLeads(campaign, assignees) {
+        const totalLeads = await this.leadModel
+            .countDocuments({
+            email: null,
+            campaignId: campaign,
+        })
+            .catch(e => {
+            this.logger.debug('An error occured while getting lead count');
+        });
+        if (!totalLeads) {
+            throw new common_1.NotFoundException("No leads match the given criteria");
+        }
+        const limit = totalLeads / assignees.length;
+        let currentIndex = 0;
+        let currentAssignee = assignees[currentIndex];
+        while (currentIndex < assignees.length) {
+            await this.leadModel
+                .updateMany({
+                campaignId: campaign,
+                email: null,
+            }, { email: currentAssignee })
+                .skip(currentIndex * limit)
+                .limit(limit)
+                .lean()
+                .exec()
+                .catch(e => {
+                this.logger.debug("An error occured while trying to distribute leads");
+            });
+            currentAssignee = assignees[++currentIndex];
+        }
     }
 };
 LeadService = LeadService_1 = __decorate([
     common_1.Injectable(),
-    __param(0, mongoose_1.InjectModel("Lead")),
-    __param(1, mongoose_1.InjectModel("AdminAction")),
-    __param(2, mongoose_1.InjectModel("CampaignConfig")),
-    __param(3, mongoose_1.InjectModel("Campaign")),
+    __param(0, mongoose_1.InjectModel('Lead')),
+    __param(1, mongoose_1.InjectModel('AdminAction')),
+    __param(2, mongoose_1.InjectModel('CampaignConfig')),
+    __param(3, mongoose_1.InjectModel('Campaign')),
     __metadata("design:paramtypes", [mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,
