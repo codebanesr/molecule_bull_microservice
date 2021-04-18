@@ -1,29 +1,33 @@
-import { Injectable, Logger, NotAcceptableException, NotFoundException } from "@nestjs/common";
-import { InjectModel } from "@nestjs/mongoose";
-import { Model, NativeError } from "mongoose";
-import { S3UploadedFiles } from "src/bull-queue/processors/lead-upload.interface";
-import { Campaign } from "src/campaign/interfaces/campaign.interface";
-import { AdminAction } from "src/user/interfaces/admin-actions.interface";
-import { IConfig } from "src/utils/renameJson";
-import { CampaignConfig } from "./interfaces/campaign-config.interface";
-import { Lead } from "./interfaces/lead.interface";
-import { utils, write } from "xlsx";
-import parseExcel from "../utils/parseExcel";
-import { UploadService } from "./upload.service";
-import { PushNotificationService } from "./push-notification.service";
-import { EmailService } from "../utils/sendMail";
-import { AlertsGateway } from "src/socks/alerts.gateway";
-import { UserActivityDto } from "src/user/dto/user-activity.dto";
-
+import {
+  Injectable,
+  Logger,
+  NotAcceptableException,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, NativeError } from 'mongoose';
+import { S3UploadedFiles } from 'src/bull-queue/processors/lead-upload.interface';
+import { Campaign } from 'src/campaign/interfaces/campaign.interface';
+import { AdminAction } from 'src/user/interfaces/admin-actions.interface';
+import { IConfig } from 'src/utils/renameJson';
+import { CampaignConfig } from './interfaces/campaign-config.interface';
+import { Lead } from './interfaces/lead.interface';
+import { utils, write } from 'xlsx';
+import parseExcel from '../utils/parseExcel';
+import { UploadService } from './upload.service';
+import { PushNotificationService } from './push-notification.service';
+import { EmailService } from '../utils/sendMail';
+import { AlertsGateway } from 'src/socks/alerts.gateway';
+import { UserActivityDto } from 'src/user/dto/user-activity.dto';
 
 interface LeadFileUpload {
-  files: S3UploadedFiles[],
-  campaignName: string,
-  uploader: string,
-  organization: string,
-  userId: string,
-  pushtoken: any,
-  campaignId: string
+  files: S3UploadedFiles[];
+  campaignName: string;
+  uploader: string;
+  organization: string;
+  userId: string;
+  pushtoken: any;
+  campaignId: string;
 }
 @Injectable()
 export class LeadService {
@@ -96,7 +100,7 @@ export class LeadService {
       filePath: data.files[0].Location,
       savedOn: 's3',
       campaign: data.campaignId,
-      fileType: 'campaignConfig',
+      fileType: 'lead',
     });
 
     this.logger.debug('Saving this action to adminActions model');
@@ -173,38 +177,43 @@ export class LeadService {
 
     // const leadMappings = keyBy(leadColumns, "internalField");
     for (const lead of leads) {
-      let findByQuery = {};
-      uniqueAttr.uniqueCols.forEach(col => {
-        findByQuery[col] = lead[col];
-      });
+      try {
+        let findByQuery = {};
+        uniqueAttr.uniqueCols.forEach(col => {
+          findByQuery[col] = lead[col];
+        });
 
-      /** @Todo to improve update speed use an index of campaignId, @Note mongoose already understands that campaignId is ObjectId
-       * no need to convert it;; organization filter is not required since campaignId is mongoose id which is going to be unique
-       * throughout
-       */
-      findByQuery['campaignId'] = campaignId;
+        /** @Todo to improve update speed use an index of campaignId, @Note mongoose already understands that campaignId is ObjectId
+         * no need to convert it;; organization filter is not required since campaignId is mongoose id which is going to be unique
+         * throughout
+         */
+        findByQuery['campaignId'] = campaignId;
 
-      this.logger.debug(findByQuery);
-      const { lastErrorObject, value } = await this.leadModel
-        .findOneAndUpdate(
-          findByQuery,
-          {
-            ...lead,
-            campaign: campaignName,
-            organization,
-            uploader,
-            campaignId,
-          },
-          { new: true, upsert: true, rawResult: true },
-        )
-        .lean()
-        .exec();
-      if (lastErrorObject.updatedExisting === true) {
-        updated.push(value);
-      } else if (lastErrorObject.upserted) {
-        created.push(value);
-      } else {
-        error.push(value);
+        this.logger.debug(findByQuery, 'find query');
+        const { lastErrorObject, value } = await this.leadModel
+          .findOneAndUpdate(
+            findByQuery,
+            {
+              ...lead,
+              campaign: campaignName,
+              organization,
+              uploader,
+              campaignId,
+            },
+            { new: true, upsert: true, rawResult: true },
+          )
+          .lean()
+          .exec();
+        if (lastErrorObject.updatedExisting === true) {
+          updated.push(value);
+        } else if (lastErrorObject.upserted) {
+          created.push(value);
+        } else {
+          error.push(value);
+        }
+      } catch (e) {
+        this.logger.error(e);
+        error.push(e.message)
       }
     }
 
@@ -213,8 +222,8 @@ export class LeadService {
     const updated_ws = utils.json_to_sheet(updated);
 
     const wb = utils.book_new();
-    utils.book_append_sheet(wb, updated_ws, 'tickets updated');
-    utils.book_append_sheet(wb, created_ws, 'tickets created');
+    utils.book_append_sheet(wb, updated_ws, 'updated leads');
+    utils.book_append_sheet(wb, created_ws, 'created leads');
 
     // writeFile(wb, originalFileName + "_system");
     const wbOut = write(wb, {
@@ -223,7 +232,7 @@ export class LeadService {
     });
 
     const fileName = `result-${originalFileName}`;
-    Logger.debug('Generated result file and store it to ', fileName);
+    this.logger.debug('Generated result file and store it to ', fileName);
     const result = await this.s3UploadService.uploadFileBuffer(fileName, wbOut);
     this.logger.error('Uploaded result file to s3');
 
@@ -233,7 +242,7 @@ export class LeadService {
       actionType: 'lead',
       filePath: result.Location,
       savedOn: 's3',
-      fileType: 'lead',
+      fileType: 'lead-log',
       campaign: campaignId,
     });
 
@@ -278,10 +287,10 @@ export class LeadService {
         this.logger.debug('An error occured while getting lead count');
       });
 
-    if(!totalLeads) {
-      throw new NotFoundException("No leads match the given criteria");
+    if (!totalLeads) {
+      throw new NotFoundException('No leads match the given criteria');
     }
-    
+
     const limit = totalLeads / assignees.length;
     let currentIndex = 0;
     let currentAssignee = assignees[currentIndex];
@@ -298,8 +307,10 @@ export class LeadService {
         .limit(limit)
         .lean()
         .exec()
-        .catch(e=>{
-          this.logger.debug("An error occured while trying to distribute leads")
+        .catch(e => {
+          this.logger.debug(
+            'An error occured while trying to distribute leads',
+          );
         });
 
       currentAssignee = assignees[++currentIndex];

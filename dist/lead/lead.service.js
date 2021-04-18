@@ -71,7 +71,7 @@ let LeadService = LeadService_1 = class LeadService {
             filePath: data.files[0].Location,
             savedOn: 's3',
             campaign: data.campaignId,
-            fileType: 'campaignConfig',
+            fileType: 'lead',
         });
         this.logger.debug('Saving this action to adminActions model');
         const result = await this.parseLeadFiles(data.files, ccnfg, data.campaignName, data.organization, data.uploader, data.userId, data.pushtoken, data.campaignId, uniqueAttr);
@@ -99,39 +99,44 @@ let LeadService = LeadService_1 = class LeadService {
         const updated = [];
         const error = [];
         for (const lead of leads) {
-            let findByQuery = {};
-            uniqueAttr.uniqueCols.forEach(col => {
-                findByQuery[col] = lead[col];
-            });
-            findByQuery['campaignId'] = campaignId;
-            this.logger.debug(findByQuery);
-            const { lastErrorObject, value } = await this.leadModel
-                .findOneAndUpdate(findByQuery, Object.assign(Object.assign({}, lead), { campaign: campaignName, organization,
-                uploader,
-                campaignId }), { new: true, upsert: true, rawResult: true })
-                .lean()
-                .exec();
-            if (lastErrorObject.updatedExisting === true) {
-                updated.push(value);
+            try {
+                let findByQuery = {};
+                uniqueAttr.uniqueCols.forEach(col => {
+                    findByQuery[col] = lead[col];
+                });
+                findByQuery['campaignId'] = campaignId;
+                this.logger.debug(findByQuery, 'find query');
+                const { lastErrorObject, value } = await this.leadModel
+                    .findOneAndUpdate(findByQuery, Object.assign(Object.assign({}, lead), { campaign: campaignName, organization,
+                    uploader,
+                    campaignId }), { new: true, upsert: true, rawResult: true })
+                    .lean()
+                    .exec();
+                if (lastErrorObject.updatedExisting === true) {
+                    updated.push(value);
+                }
+                else if (lastErrorObject.upserted) {
+                    created.push(value);
+                }
+                else {
+                    error.push(value);
+                }
             }
-            else if (lastErrorObject.upserted) {
-                created.push(value);
-            }
-            else {
-                error.push(value);
+            catch (e) {
+                this.logger.error(e);
             }
         }
         const created_ws = xlsx_1.utils.json_to_sheet(created);
         const updated_ws = xlsx_1.utils.json_to_sheet(updated);
         const wb = xlsx_1.utils.book_new();
-        xlsx_1.utils.book_append_sheet(wb, updated_ws, 'tickets updated');
-        xlsx_1.utils.book_append_sheet(wb, created_ws, 'tickets created');
+        xlsx_1.utils.book_append_sheet(wb, updated_ws, 'updated leads');
+        xlsx_1.utils.book_append_sheet(wb, created_ws, 'created leads');
         const wbOut = xlsx_1.write(wb, {
             bookType: 'xlsx',
             type: 'buffer',
         });
         const fileName = `result-${originalFileName}`;
-        common_1.Logger.debug('Generated result file and store it to ', fileName);
+        this.logger.debug('Generated result file and store it to ', fileName);
         const result = await this.s3UploadService.uploadFileBuffer(fileName, wbOut);
         this.logger.error('Uploaded result file to s3');
         await this.adminActionModel.create({
@@ -140,7 +145,7 @@ let LeadService = LeadService_1 = class LeadService {
             actionType: 'lead',
             filePath: result.Location,
             savedOn: 's3',
-            fileType: 'lead',
+            fileType: 'lead-log',
             campaign: campaignId,
         });
         this.alertsGateway.sendMessageToClient({
@@ -174,7 +179,7 @@ let LeadService = LeadService_1 = class LeadService {
             this.logger.debug('An error occured while getting lead count');
         });
         if (!totalLeads) {
-            throw new common_1.NotFoundException("No leads match the given criteria");
+            throw new common_1.NotFoundException('No leads match the given criteria');
         }
         const limit = totalLeads / assignees.length;
         let currentIndex = 0;
@@ -190,7 +195,7 @@ let LeadService = LeadService_1 = class LeadService {
                 .lean()
                 .exec()
                 .catch(e => {
-                this.logger.debug("An error occured while trying to distribute leads");
+                this.logger.debug('An error occured while trying to distribute leads');
             });
             currentAssignee = assignees[++currentIndex];
         }

@@ -1,14 +1,14 @@
-import { Model } from "mongoose";
-import { S3UploadedFiles } from "src/bull-queue/processors/lead-upload.interface";
-import { Campaign } from "src/campaign/interfaces/campaign.interface";
-import { AdminAction } from "src/user/interfaces/admin-actions.interface";
-import { IConfig } from "src/utils/renameJson";
-import { CampaignConfig } from "./interfaces/campaign-config.interface";
-import { Lead } from "./interfaces/lead.interface";
-import { UploadService } from "./upload.service";
-import { PushNotificationService } from "./push-notification.service";
-import { EmailService } from "../utils/sendMail";
-import { AlertsGateway } from "src/socks/alerts.gateway";
+import { Model } from 'mongoose';
+import { S3UploadedFiles } from 'src/bull-queue/processors/lead-upload.interface';
+import { Campaign } from 'src/campaign/interfaces/campaign.interface';
+import { AdminAction } from 'src/user/interfaces/admin-actions.interface';
+import { IConfig } from 'src/utils/renameJson';
+import { CampaignConfig } from './interfaces/campaign-config.interface';
+import { Lead } from './interfaces/lead.interface';
+import { UploadService } from './upload.service';
+import { PushNotificationService } from './push-notification.service';
+import { EmailService } from '../utils/sendMail';
+import { AlertsGateway } from 'src/socks/alerts.gateway';
 interface LeadFileUpload {
     files: S3UploadedFiles[];
     campaignName: string;
