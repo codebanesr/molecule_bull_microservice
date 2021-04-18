@@ -4767,7 +4767,7 @@
         "affectsGlobalScope": false
       },
       "../src/lead/lead.service.ts": {
-        "version": "4de4a1aaf0fcd692e625c4bbe8f05fcde89b3994ebea59c060744f16cd4fb267",
+        "version": "cd92375bd5fdb6883f1bcda2e7adc4d3d2ed2c1c0c56f524c18bd4c41f76a41f",
         "signature": "c17072b5b333ee22ed2d3259ae27b4fe7bc64a10ac5e9a652538d54f20f4909a",
         "affectsGlobalScope": false
       },
@@ -13260,6 +13260,7 @@
         "../node_modules/@nestjs/common/index.d.ts",
         "../node_modules/@nestjs/mongoose/index.d.ts",
         "../node_modules/@types/mongoose/index.d.ts",
+        "../node_modules/class-validator/types/index.d.ts",
         "../node_modules/mongoose/index.d.ts",
         "../node_modules/xlsx/types/index.d.ts",
         "../src/bull-queue/processors/lead-upload.interface.ts",
