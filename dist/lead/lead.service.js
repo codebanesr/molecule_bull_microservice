@@ -28,6 +28,7 @@ const push_notification_service_1 = require("./push-notification.service");
 const sendMail_1 = require("../utils/sendMail");
 const alerts_gateway_1 = require("../socks/alerts.gateway");
 const user_activity_dto_1 = require("../user/dto/user-activity.dto");
+const class_validator_1 = require("class-validator");
 let LeadService = LeadService_1 = class LeadService {
     constructor(leadModel, adminActionModel, campaignConfigModel, campaignModel, s3UploadService, pushNotificationService, emailService, alertsGateway) {
         this.leadModel = leadModel;
@@ -101,6 +102,9 @@ let LeadService = LeadService_1 = class LeadService {
         for (const lead of leads) {
             try {
                 let findByQuery = {};
+                if (!class_validator_1.isMobilePhone(lead.mobilePhone)) {
+                    throw new Error("need a valid mobile numer");
+                }
                 uniqueAttr.uniqueCols.forEach(col => {
                     findByQuery[col] = lead[col];
                 });
@@ -124,6 +128,7 @@ let LeadService = LeadService_1 = class LeadService {
             }
             catch (e) {
                 this.logger.error(e);
+                error.push(e.message);
             }
         }
         const created_ws = xlsx_1.utils.json_to_sheet(created);

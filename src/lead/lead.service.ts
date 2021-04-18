@@ -19,6 +19,7 @@ import { PushNotificationService } from './push-notification.service';
 import { EmailService } from '../utils/sendMail';
 import { AlertsGateway } from 'src/socks/alerts.gateway';
 import { UserActivityDto } from 'src/user/dto/user-activity.dto';
+import { isMobilePhone } from 'class-validator';
 
 interface LeadFileUpload {
   files: S3UploadedFiles[];
@@ -179,6 +180,9 @@ export class LeadService {
     for (const lead of leads) {
       try {
         let findByQuery = {};
+        if(!isMobilePhone(lead.mobilePhone)) {
+          throw new Error("need a valid mobile numer");
+        }
         uniqueAttr.uniqueCols.forEach(col => {
           findByQuery[col] = lead[col];
         });
