@@ -28,7 +28,6 @@ const push_notification_service_1 = require("./push-notification.service");
 const sendMail_1 = require("../utils/sendMail");
 const alerts_gateway_1 = require("../socks/alerts.gateway");
 const user_activity_dto_1 = require("../user/dto/user-activity.dto");
-const class_validator_1 = require("class-validator");
 let LeadService = LeadService_1 = class LeadService {
     constructor(leadModel, adminActionModel, campaignConfigModel, campaignModel, s3UploadService, pushNotificationService, emailService, alertsGateway) {
         this.leadModel = leadModel;
@@ -62,6 +61,7 @@ let LeadService = LeadService_1 = class LeadService {
             .find({ campaignId: data.campaignId }, { readableField: 1, internalField: 1, _id: 0 })
             .lean()
             .exec();
+        this.logger.debug({ ccnfg: JSON.stringify(ccnfg) });
         if (!ccnfg) {
             throw new Error(`Campaign with name ${data.campaignName} not found, create a campaign before uploading leads for that campaign`);
         }
@@ -99,17 +99,15 @@ let LeadService = LeadService_1 = class LeadService {
         const created = [];
         const updated = [];
         const error = [];
-        for (const lead of leads) {
+        console.log("extracted leads", JSON.stringify(leads));
+        for (let lead of leads) {
             try {
                 let findByQuery = {};
-                if (!class_validator_1.isMobilePhone(lead.mobilePhone)) {
-                    throw new Error("need a valid mobile numer");
-                }
                 uniqueAttr.uniqueCols.forEach(col => {
                     findByQuery[col] = lead[col];
                 });
                 findByQuery['campaignId'] = campaignId;
-                this.logger.debug(findByQuery, 'find query');
+                this.logger.debug(findByQuery);
                 const { lastErrorObject, value } = await this.leadModel
                     .findOneAndUpdate(findByQuery, Object.assign(Object.assign({}, lead), { campaign: campaignName, organization,
                     uploader,

@@ -87,6 +87,7 @@ export class LeadService {
       )
       .lean()
       .exec();
+    this.logger.debug({ccnfg: JSON.stringify(ccnfg)})
 
     if (!ccnfg) {
       throw new Error(
@@ -177,24 +178,20 @@ export class LeadService {
     const error = [];
 
     // const leadMappings = keyBy(leadColumns, "internalField");
-    for (const lead of leads) {
+    console.log("extracted leads", JSON.stringify(leads))
+    for (let lead of leads){
       try {
         let findByQuery = {};
-        if(!isMobilePhone(lead.mobilePhone)) {
-          throw new Error("need a valid mobile numer");
-        }
-        // uniqueAttr.uniqueCols.forEach(col => {
-        //   findByQuery[col] = lead[col];
-        // });
+        // if(!isMobilePhone(lead.mobilePhone)) {
+        //   throw new Error("need a valid mobile numer");
+        // }
 
-        /** @Todo to improve update speed use an index of campaignId, @Note mongoose already understands that campaignId is ObjectId
-         * no need to convert it;; organization filter is not required since campaignId is mongoose id which is going to be unique
-         * throughout
-         */
+        uniqueAttr.uniqueCols.forEach(col => {
+          findByQuery[col] = lead[col];
+        }); 
         findByQuery['campaignId'] = campaignId;
-        findByQuery['mobilePhone'] = lead.mobilePhone;
 
-        this.logger.debug({findByQuery});
+        this.logger.debug(findByQuery)
         const { lastErrorObject, value } = await this.leadModel
           .findOneAndUpdate(
             findByQuery,
