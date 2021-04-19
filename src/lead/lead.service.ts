@@ -183,9 +183,9 @@ export class LeadService {
         if(!isMobilePhone(lead.mobilePhone)) {
           throw new Error("need a valid mobile numer");
         }
-        uniqueAttr.uniqueCols.forEach(col => {
-          findByQuery[col] = lead[col];
-        });
+        // uniqueAttr.uniqueCols.forEach(col => {
+        //   findByQuery[col] = lead[col];
+        // });
 
         /** @Todo to improve update speed use an index of campaignId, @Note mongoose already understands that campaignId is ObjectId
          * no need to convert it;; organization filter is not required since campaignId is mongoose id which is going to be unique
@@ -193,10 +193,10 @@ export class LeadService {
          */
         findByQuery['campaignId'] = campaignId;
 
-        this.logger.debug(findByQuery, 'find query');
+        this.logger.debug({findByQuery});
         const { lastErrorObject, value } = await this.leadModel
           .findOneAndUpdate(
-            findByQuery,
+            {mobilePhone: lead.mobilePhone},
             {
               ...lead,
               campaign: campaignName,
