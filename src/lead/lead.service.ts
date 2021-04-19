@@ -192,11 +192,12 @@ export class LeadService {
          * throughout
          */
         findByQuery['campaignId'] = campaignId;
+        findByQuery['mobilePhone'] = lead.mobilePhone;
 
         this.logger.debug({findByQuery});
         const { lastErrorObject, value } = await this.leadModel
           .findOneAndUpdate(
-            {mobilePhone: lead.mobilePhone},
+            findByQuery,
             {
               ...lead,
               campaign: campaignName,
