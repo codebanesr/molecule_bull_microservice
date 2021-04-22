@@ -80,12 +80,6 @@ let LeadService = LeadService_1 = class LeadService {
         return { files: data.files, result };
     }
     async parseLeadFiles(files, ccnfg, campaignName, organization, uploader, uploaderId, pushtoken, campaignId, uniqueAttr) {
-        !process.env.testing &&
-            this.emailService.sendMail({
-                to: 'shanur.cse.nitap@gmail.com',
-                subject: 'Your file has been uploaded for processing ...',
-                text: 'Sample text sent from amazon ses service',
-            });
         this.alertsGateway.sendMessageToClient({
             room: uploader,
             text: 'Received file for processing',
@@ -103,6 +97,10 @@ let LeadService = LeadService_1 = class LeadService {
         for (let lead of leads) {
             try {
                 let findByQuery = {};
+                lead.mobilePhone = lead.mobilePhone.replace(/\s/g, "");
+                if (!lead.mobilePhone.startsWith("+91") && lead.mobilePhone.length === 10) {
+                    lead.mobilePhone = "+91" + lead.mobilePhone;
+                }
                 uniqueAttr.uniqueCols.forEach(col => {
                     findByQuery[col] = lead[col];
                 });
@@ -141,6 +139,11 @@ let LeadService = LeadService_1 = class LeadService {
         const fileName = `result-${originalFileName}`;
         this.logger.debug('Generated result file and store it to ', fileName);
         const result = await this.s3UploadService.uploadFileBuffer(fileName, wbOut);
+        this.emailService.sendMail({
+            to: uploader,
+            subject: 'Lead file Results have been uploaded',
+            text: `You can find a copy of your lead output file here: ${result.Location}`,
+        });
         this.logger.error('Uploaded result file to s3');
         await this.adminActionModel.create({
             userid: uploaderId,

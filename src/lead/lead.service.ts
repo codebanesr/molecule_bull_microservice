@@ -116,7 +116,7 @@ export class LeadService {
       data.userId,
       data.pushtoken,
       data.campaignId,
-      uniqueAttr,
+      uniqueAttr
     );
 
     this.logger.debug('Lead files parsed successfully');
@@ -135,13 +135,6 @@ export class LeadService {
     campaignId: string,
     uniqueAttr: Partial<Campaign>,
   ) {
-    !process.env.testing &&
-      this.emailService.sendMail({
-        to: 'shanur.cse.nitap@gmail.com',
-        subject: 'Your file has been uploaded for processing ...',
-        text: 'Sample text sent from amazon ses service',
-      });
-
     this.alertsGateway.sendMessageToClient({
       room: uploader,
       text: 'Received file for processing',
@@ -186,6 +179,11 @@ export class LeadService {
         //   throw new Error("need a valid mobile numer");
         // }
 
+        // +919199946568
+        lead.mobilePhone = lead.mobilePhone.replace(/\s/g, "");
+        if(!lead.mobilePhone.startsWith("+91") && lead.mobilePhone.length === 10) {
+          lead.mobilePhone = "+91"+lead.mobilePhone;
+        }
         uniqueAttr.uniqueCols.forEach(col => {
           findByQuery[col] = lead[col];
         }); 
@@ -236,6 +234,12 @@ export class LeadService {
     const fileName = `result-${originalFileName}`;
     this.logger.debug('Generated result file and store it to ', fileName);
     const result = await this.s3UploadService.uploadFileBuffer(fileName, wbOut);
+    this.emailService.sendMail({
+      to: uploader,
+      subject: 'Lead file Results have been uploaded',
+      text: `You can find a copy of your lead output file here: ${result.Location}`,
+    });
+
     this.logger.error('Uploaded result file to s3');
 
     await this.adminActionModel.create({
