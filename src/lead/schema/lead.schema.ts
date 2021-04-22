@@ -37,9 +37,7 @@ export const LeadSchema = new Schema(
     organization: { type: Schema.Types.ObjectId, ref: "Organization" },
     documentLinks: [String],
     mobilePhone: {
-      type: String,
-      unique: true,
-      validate: validator.isMobilePhone,
+      type: String
     },
     isPristine: {
       type: Boolean,
