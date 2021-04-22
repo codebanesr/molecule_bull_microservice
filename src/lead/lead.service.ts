@@ -57,7 +57,6 @@ export class LeadService {
   private logger = new Logger(LeadService.name, true);
 
   async uploadMultipleLeadFiles(data: LeadFileUpload) {
-    this.logger.debug({ campaignId: data.campaignId });
     const uniqueAttr = await this.campaignModel
       .findOne({ _id: data.campaignId }, { uniqueCols: 1 })
       .lean()
@@ -174,12 +173,13 @@ export class LeadService {
     console.log("extracted leads", JSON.stringify(leads))
     for (let lead of leads){
       try {
-        let findByQuery = {};
-        // if(!isMobilePhone(lead.mobilePhone)) {
-        //   throw new Error("need a valid mobile numer");
-        // }
+        Object.keys(lead).forEach(lk=>{
+          if(!lead[lk]) {
+            delete lead[lk];
+          }
+        });
 
-        // +919199946568
+        let findByQuery = {};
         lead.mobilePhone = lead.mobilePhone.replace(/\s/g, "");
         if(!lead.mobilePhone.startsWith("+91") && lead.mobilePhone.length === 10) {
           lead.mobilePhone = "+91"+lead.mobilePhone;

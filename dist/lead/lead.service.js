@@ -41,7 +41,6 @@ let LeadService = LeadService_1 = class LeadService {
         this.logger = new common_1.Logger(LeadService_1.name, true);
     }
     async uploadMultipleLeadFiles(data) {
-        this.logger.debug({ campaignId: data.campaignId });
         const uniqueAttr = await this.campaignModel
             .findOne({ _id: data.campaignId }, { uniqueCols: 1 })
             .lean()
@@ -96,6 +95,11 @@ let LeadService = LeadService_1 = class LeadService {
         console.log("extracted leads", JSON.stringify(leads));
         for (let lead of leads) {
             try {
+                Object.keys(lead).forEach(lk => {
+                    if (!lead[lk]) {
+                        delete lead[lk];
+                    }
+                });
                 let findByQuery = {};
                 lead.mobilePhone = lead.mobilePhone.replace(/\s/g, "");
                 if (!lead.mobilePhone.startsWith("+91") && lead.mobilePhone.length === 10) {
