@@ -93,40 +93,41 @@ let LeadService = LeadService_1 = class LeadService {
         const created = [];
         const updated = [];
         const error = [];
-        console.log("extracted leads", JSON.stringify(leads));
+        const bulkOps = [];
         for (let lead of leads) {
-            try {
-                let findByQuery = {};
-                lead.mobilePhone = lead.mobilePhone.replace(/\s/g, "");
-                if (!lead.mobilePhone.startsWith("+91") && lead.mobilePhone.length === 10) {
-                    lead.mobilePhone = "+91" + lead.mobilePhone;
-                }
-                uniqueAttr.uniqueCols.forEach(col => {
-                    findByQuery[col] = lead[col];
-                });
-                findByQuery['campaignId'] = campaignId;
-                this.logger.debug(findByQuery);
-                const { lastErrorObject, value } = await this.leadModel
-                    .findOneAndUpdate(findByQuery, Object.assign(Object.assign({}, lead), { campaign: campaignName, organization,
-                    uploader,
-                    campaignId }), { new: true, upsert: true, rawResult: true })
-                    .lean()
-                    .exec();
-                if (lastErrorObject.updatedExisting === true) {
-                    updated.push(value);
-                }
-                else if (lastErrorObject.upserted) {
-                    created.push(value);
-                }
-                else {
-                    error.push(value);
-                }
+            let findByQuery = {};
+            if (!lead.mobilePhone) {
+                console.log("No mobile phone", { lead });
+                continue;
+                throw new Error("Mobile Number cannot be empty");
             }
-            catch (e) {
-                this.logger.error(e);
-                error.push(e.message);
+            lead.mobilePhone = lead.mobilePhone.replace(/\s/g, '');
+            if (!lead.mobilePhone.startsWith('+91') &&
+                lead.mobilePhone.length === 10) {
+                lead.mobilePhone = '+91' + lead.mobilePhone;
             }
+            uniqueAttr.uniqueCols.forEach(col => {
+                findByQuery[col] = lead[col];
+            });
+            findByQuery['campaignId'] = campaignId;
+            this.logger.debug(findByQuery);
+            Object.keys(findByQuery).forEach(key => {
+                delete lead[key];
+            });
+            bulkOps.push({
+                updateOne: {
+                    filter: findByQuery,
+                    update: Object.assign(Object.assign({}, lead), { campaign: campaignName, organization,
+                        uploader,
+                        campaignId }),
+                    upsert: true
+                }
+            });
         }
+        console.log({ bulkOps: JSON.stringify(bulkOps) });
+        const response = await this.leadModel.bulkWrite(bulkOps);
+        console.log(response);
+        this.logger.log(response);
         const created_ws = xlsx_1.utils.json_to_sheet(created);
         const updated_ws = xlsx_1.utils.json_to_sheet(updated);
         const wb = xlsx_1.utils.book_new();
