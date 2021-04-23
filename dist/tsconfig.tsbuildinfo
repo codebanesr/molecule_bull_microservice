@@ -4036,7 +4036,7 @@
         "signature": "bed35c3ddd0ffc1a8e0fe9dcf83c7b2e0e2900de26405012aaf3724e8fd1a42d",
         "affectsGlobalScope": false
       },
-      "../src/socks/alerts.gateway.ts": {
+      "../../socks/alerts.gateway.ts": {
         "version": "60dabc591d5c480efad8f4efe55560eeef3014927aaf9e8622c2e35559cfcd7e",
         "signature": "dc6829a9e1d3a33a75cd4dda34a8bccff3d2694ce7546224aa18d2b58b64cd43",
         "affectsGlobalScope": false
@@ -13353,7 +13353,7 @@
         "../src/lead/schema/campaign-config.schema.ts",
         "../src/lead/schema/lead.schema.ts",
         "../src/lead/upload.service.ts",
-        "../src/socks/alerts.gateway.ts",
+        "../../socks/alerts.gateway.ts",
         "../src/user/schemas/admin-action.schema.ts",
         "../src/utils/sendMail.ts"
       ],
@@ -13370,7 +13370,7 @@
         "../src/lead/interfaces/lead.interface.ts",
         "../src/lead/push-notification.service.ts",
         "../src/lead/upload.service.ts",
-        "../src/socks/alerts.gateway.ts",
+        "../../socks/alerts.gateway.ts",
         "../src/user/dto/user-activity.dto.ts",
         "../src/user/interfaces/admin-actions.interface.ts",
         "../src/utils/parseExcel.ts",
@@ -13427,7 +13427,7 @@
         "../node_modules/mongoose/index.d.ts",
         "../src/app.module.ts"
       ],
-      "../src/socks/alerts.gateway.ts": [
+      "../../socks/alerts.gateway.ts": [
         "../node_modules/@nestjs/common/index.d.ts",
         "../node_modules/@nestjs/websockets/index.d.ts",
         "../node_modules/@types/mongoose/index.d.ts",
@@ -21160,7 +21160,7 @@
         "../src/lead/interfaces/lead.interface.ts",
         "../src/lead/push-notification.service.ts",
         "../src/lead/upload.service.ts",
-        "../src/socks/alerts.gateway.ts",
+        "../../socks/alerts.gateway.ts",
         "../src/user/interfaces/admin-actions.interface.ts",
         "../src/utils/renameJson.ts",
         "../src/utils/sendMail.ts"
@@ -21192,7 +21192,7 @@
       "../src/lead/upload.service.ts": [
         "../node_modules/aws-sdk/index.d.ts"
       ],
-      "../src/socks/alerts.gateway.ts": [
+      "../../socks/alerts.gateway.ts": [
         "../node_modules/@nestjs/websockets/index.d.ts",
         "../node_modules/@types/socket.io/index.d.ts"
       ],
@@ -22324,7 +22324,7 @@
       "../src/lead/schema/lead.schema.ts",
       "../src/lead/upload.service.ts",
       "../src/main.ts",
-      "../src/socks/alerts.gateway.ts",
+      "../../socks/alerts.gateway.ts",
       "../src/user/dto/create-forgot-password.dto.ts",
       "../src/user/dto/create-reseller.dto.ts",
       "../src/user/dto/create-user.dto.ts",

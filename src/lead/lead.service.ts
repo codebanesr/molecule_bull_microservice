@@ -17,7 +17,7 @@ import parseExcel from '../utils/parseExcel';
 import { UploadService } from './upload.service';
 import { PushNotificationService } from './push-notification.service';
 import { EmailService } from '../utils/sendMail';
-import { AlertsGateway } from 'src/socks/alerts.gateway';
+import { AlertsGateway } from '../socks/alerts.gateway';
 import { UserActivityDto } from 'src/user/dto/user-activity.dto';
 import { isMobilePhone } from 'class-validator';
 

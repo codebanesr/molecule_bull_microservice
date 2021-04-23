@@ -8,7 +8,7 @@ import { Lead } from './interfaces/lead.interface';
 import { UploadService } from './upload.service';
 import { PushNotificationService } from './push-notification.service';
 import { EmailService } from '../utils/sendMail';
-import { AlertsGateway } from 'src/socks/alerts.gateway';
+import { AlertsGateway } from '../socks/alerts.gateway';
 interface LeadFileUpload {
     files: S3UploadedFiles[];
     campaignName: string;

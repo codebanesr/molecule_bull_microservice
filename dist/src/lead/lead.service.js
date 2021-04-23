@@ -22,7 +22,7 @@ const parseExcel_1 = require("../utils/parseExcel");
 const upload_service_1 = require("./upload.service");
 const push_notification_service_1 = require("./push-notification.service");
 const sendMail_1 = require("../utils/sendMail");
-const alerts_gateway_1 = require("src/socks/alerts.gateway");
+const alerts_gateway_1 = require("../socks/alerts.gateway");
 let LeadService = LeadService_1 = class LeadService {
     constructor(leadModel, adminActionModel, campaignConfigModel, campaignModel, s3UploadService, pushNotificationService, emailService, alertsGateway) {
         this.leadModel = leadModel;
