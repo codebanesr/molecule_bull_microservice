@@ -200,7 +200,6 @@ export class LeadService {
         Object.keys(findByQuery).forEach(key => {
           delete lead[key];
         });
-        // const { lastErrorObject, value } = await this.leadModel
         bulkOps.push({
           updateOne: {
             filter: findByQuery,
