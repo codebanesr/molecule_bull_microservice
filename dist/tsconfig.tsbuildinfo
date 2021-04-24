@@ -4807,12 +4807,12 @@
         "affectsGlobalScope": false
       },
       "../src/lead/lead.service.ts": {
-        "version": "23b47d0a3332b5e609eea8c77145f28566577ed7423c85d01db85daae2ba9dc3",
+        "version": "71bb61b990382045680af2a4e293408d57ab0f62907d0f55c611151c862509fc",
         "signature": "c17072b5b333ee22ed2d3259ae27b4fe7bc64a10ac5e9a652538d54f20f4909a",
         "affectsGlobalScope": false
       },
       "../src/lead/schema/lead.schema.ts": {
-        "version": "54177e1f05b5362b0ddc86c025abe240fe6d1d5e31d8620fa9e7f4bdcd4a717a",
+        "version": "c6caa2c13c143408bab858e657a9266553ab2262a971d65fbe4c02f1d6a6b560",
         "signature": "9dcb0f353b04b03c64acb6ca6618696671b5350d6ada89675185256424ca2427",
         "affectsGlobalScope": false
       },

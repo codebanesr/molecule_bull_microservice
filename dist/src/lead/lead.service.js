@@ -89,36 +89,40 @@ let LeadService = LeadService_1 = class LeadService {
         const updated = [];
         const error = [];
         const bulkOps = [];
-        for (let lead of leads) {
-            let findByQuery = {};
-            if (!lead.mobilePhone) {
-                console.log("No mobile phone", { lead });
-                continue;
-                throw new Error("Mobile Number cannot be empty");
-            }
-            lead.mobilePhone = lead.mobilePhone.replace(/\s/g, '');
-            if (!lead.mobilePhone.startsWith('+91') &&
-                lead.mobilePhone.length === 10) {
-                lead.mobilePhone = '+91' + lead.mobilePhone;
-            }
-            uniqueAttr.uniqueCols.forEach(col => {
-                findByQuery[col] = lead[col];
-            });
-            findByQuery['campaignId'] = campaignId;
-            this.logger.debug(findByQuery);
-            Object.keys(findByQuery).forEach(key => {
-                delete lead[key];
-            });
-            bulkOps.push({
-                updateOne: {
-                    filter: findByQuery,
-                    update: Object.assign(Object.assign({}, lead), { campaign: campaignName, organization,
-                        uploader,
-                        campaignId }),
-                    upsert: true
+        leads.forEach(lead => {
+            try {
+                let findByQuery = {};
+                if (!lead.mobilePhone) {
+                    console.log('No mobile phone', { lead });
+                    return;
                 }
-            });
-        }
+                lead.mobilePhone = lead.mobilePhone.replace(/\s/g, '');
+                if (!lead.mobilePhone.startsWith('+91') &&
+                    lead.mobilePhone.length === 10) {
+                    lead.mobilePhone = '+91' + lead.mobilePhone;
+                }
+                uniqueAttr.uniqueCols.forEach(col => {
+                    findByQuery[col] = lead[col];
+                });
+                findByQuery['campaignId'] = campaignId;
+                this.logger.debug(findByQuery);
+                Object.keys(findByQuery).forEach(key => {
+                    delete lead[key];
+                });
+                bulkOps.push({
+                    updateOne: {
+                        filter: findByQuery,
+                        update: Object.assign(Object.assign({}, lead), { campaign: campaignName, organization,
+                            uploader,
+                            campaignId }),
+                        upsert: true,
+                    },
+                });
+            }
+            catch (e) {
+                this.logger.debug(e);
+            }
+        });
         console.log({ bulkOps: JSON.stringify(bulkOps) });
         const response = await this.leadModel.bulkWrite(bulkOps);
         console.log(response);
