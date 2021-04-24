@@ -187,12 +187,12 @@ export class LeadService {
         // }
         // lead.mobilePhone = lead.mobilePhone+"";
         // lead.mobilePhone = lead.mobilePhone.replace(/\s/g, '');
-        if (
-          !lead.mobilePhone.startsWith('+91') &&
-          lead.mobilePhone.length === 10
-        ) {
-          lead.mobilePhone = '+91' + lead.mobilePhone;
-        }
+        // if (
+        //   !lead.mobilePhone.startsWith('+91') &&
+        //   lead.mobilePhone.length === 10
+        // ) {
+        //   lead.mobilePhone = '+91' + lead.mobilePhone;
+        // }
         uniqueAttr.uniqueCols.forEach(col => {
           findByQuery[col] = lead[col];
         });
