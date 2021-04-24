@@ -181,12 +181,12 @@ export class LeadService {
         // }
 
         // +919199946568
-        if (!lead.mobilePhone) {
-          console.log('No mobile phone', { lead });
-          return;
-        }
-        lead.mobilePhone = lead.mobilePhone+"";
-        lead.mobilePhone = lead.mobilePhone.replace(/\s/g, '');
+        // if (!lead.mobilePhone) {
+        //   console.log('No mobile phone', { lead });
+        //   return;
+        // }
+        // lead.mobilePhone = lead.mobilePhone+"";
+        // lead.mobilePhone = lead.mobilePhone.replace(/\s/g, '');
         if (
           !lead.mobilePhone.startsWith('+91') &&
           lead.mobilePhone.length === 10
