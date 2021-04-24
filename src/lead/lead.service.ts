@@ -185,6 +185,7 @@ export class LeadService {
           console.log('No mobile phone', { lead });
           return;
         }
+        lead.mobilePhone = lead.mobilePhone+"";
         lead.mobilePhone = lead.mobilePhone.replace(/\s/g, '');
         if (
           !lead.mobilePhone.startsWith('+91') &&
