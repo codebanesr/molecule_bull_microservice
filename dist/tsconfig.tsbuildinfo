@@ -4036,7 +4036,7 @@
         "signature": "bed35c3ddd0ffc1a8e0fe9dcf83c7b2e0e2900de26405012aaf3724e8fd1a42d",
         "affectsGlobalScope": false
       },
-      "../../socks/alerts.gateway.ts": {
+      "../src/socks/alerts.gateway.ts": {
         "version": "60dabc591d5c480efad8f4efe55560eeef3014927aaf9e8622c2e35559cfcd7e",
         "signature": "dc6829a9e1d3a33a75cd4dda34a8bccff3d2694ce7546224aa18d2b58b64cd43",
         "affectsGlobalScope": false
@@ -4807,12 +4807,12 @@
         "affectsGlobalScope": false
       },
       "../src/lead/lead.service.ts": {
-        "version": "0757e2b6d9f6375a479623de3f2a7c3fbb6c864bed2254a4db6b447674a8995f",
-        "signature": "c17072b5b333ee22ed2d3259ae27b4fe7bc64a10ac5e9a652538d54f20f4909a",
+        "version": "4431f1beab7fedd32b9758ebb4e1eaa84ed56ef8cebb9c1d0d2ad00a70a5d0eb",
+        "signature": "2d737bcf3220dbd4957c08fb0ae83cf526a2dd22a0aad836ee9601d783fc0777",
         "affectsGlobalScope": false
       },
       "../src/lead/schema/lead.schema.ts": {
-        "version": "54177e1f05b5362b0ddc86c025abe240fe6d1d5e31d8620fa9e7f4bdcd4a717a",
+        "version": "c6caa2c13c143408bab858e657a9266553ab2262a971d65fbe4c02f1d6a6b560",
         "signature": "9dcb0f353b04b03c64acb6ca6618696671b5350d6ada89675185256424ca2427",
         "affectsGlobalScope": false
       },
@@ -13353,7 +13353,7 @@
         "../src/lead/schema/campaign-config.schema.ts",
         "../src/lead/schema/lead.schema.ts",
         "../src/lead/upload.service.ts",
-        "../../socks/alerts.gateway.ts",
+        "../src/socks/alerts.gateway.ts",
         "../src/user/schemas/admin-action.schema.ts",
         "../src/utils/sendMail.ts"
       ],
@@ -13370,7 +13370,7 @@
         "../src/lead/interfaces/lead.interface.ts",
         "../src/lead/push-notification.service.ts",
         "../src/lead/upload.service.ts",
-        "../../socks/alerts.gateway.ts",
+        "../src/socks/alerts.gateway.ts",
         "../src/user/dto/user-activity.dto.ts",
         "../src/user/interfaces/admin-actions.interface.ts",
         "../src/utils/parseExcel.ts",
@@ -13427,7 +13427,7 @@
         "../node_modules/mongoose/index.d.ts",
         "../src/app.module.ts"
       ],
-      "../../socks/alerts.gateway.ts": [
+      "../src/socks/alerts.gateway.ts": [
         "../node_modules/@nestjs/common/index.d.ts",
         "../node_modules/@nestjs/websockets/index.d.ts",
         "../node_modules/@types/mongoose/index.d.ts",
@@ -21160,7 +21160,7 @@
         "../src/lead/interfaces/lead.interface.ts",
         "../src/lead/push-notification.service.ts",
         "../src/lead/upload.service.ts",
-        "../../socks/alerts.gateway.ts",
+        "../src/socks/alerts.gateway.ts",
         "../src/user/interfaces/admin-actions.interface.ts",
         "../src/utils/renameJson.ts",
         "../src/utils/sendMail.ts"
@@ -21192,7 +21192,7 @@
       "../src/lead/upload.service.ts": [
         "../node_modules/aws-sdk/index.d.ts"
       ],
-      "../../socks/alerts.gateway.ts": [
+      "../src/socks/alerts.gateway.ts": [
         "../node_modules/@nestjs/websockets/index.d.ts",
         "../node_modules/@types/socket.io/index.d.ts"
       ],
@@ -22324,7 +22324,7 @@
       "../src/lead/schema/lead.schema.ts",
       "../src/lead/upload.service.ts",
       "../src/main.ts",
-      "../../socks/alerts.gateway.ts",
+      "../src/socks/alerts.gateway.ts",
       "../src/user/dto/create-forgot-password.dto.ts",
       "../src/user/dto/create-reseller.dto.ts",
       "../src/user/dto/create-user.dto.ts",
