@@ -97,6 +97,12 @@ let LeadService = LeadService_1 = class LeadService {
         leads.forEach(lead => {
             try {
                 let findByQuery = {};
+                if (!lead.mobilePhone) {
+                    console.log('No mobile phone', { lead });
+                    return;
+                }
+                lead.mobilePhone = lead.mobilePhone + "";
+                lead.mobilePhone = lead.mobilePhone.replace(/\s/g, '');
                 if (!lead.mobilePhone.startsWith('+91') &&
                     lead.mobilePhone.length === 10) {
                     lead.mobilePhone = '+91' + lead.mobilePhone;
@@ -120,13 +126,13 @@ let LeadService = LeadService_1 = class LeadService {
                 });
             }
             catch (e) {
+                console.log("lead received: ", lead);
                 this.logger.debug(e);
             }
         });
         console.log({ bulkOps: JSON.stringify(bulkOps) });
         const response = await this.leadModel.bulkWrite(bulkOps);
-        console.log(response);
-        this.logger.log(response);
+        this.logger.debug(response);
         const created_ws = xlsx_1.utils.json_to_sheet(created);
         const updated_ws = xlsx_1.utils.json_to_sheet(updated);
         const wb = xlsx_1.utils.book_new();

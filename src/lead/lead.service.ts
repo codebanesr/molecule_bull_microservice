@@ -17,7 +17,7 @@ import parseExcel from '../utils/parseExcel';
 import { UploadService } from './upload.service';
 import { PushNotificationService } from './push-notification.service';
 import { EmailService } from '../utils/sendMail';
-import { AlertsGateway } from 'src/socks/alerts.gateway';
+import { AlertsGateway } from '../socks/alerts.gateway';
 import { UserActivityDto } from 'src/user/dto/user-activity.dto';
 import { isMobilePhone } from 'class-validator';
 
@@ -176,23 +176,19 @@ export class LeadService {
     leads.forEach(lead=>{
       try {
         let findByQuery = {};
-        // if(!isMobilePhone(lead.mobilePhone)) {
-        //   throw new Error("need a valid mobile numer");
-        // }
 
-        // +919199946568
-        // if (!lead.mobilePhone) {
-        //   console.log('No mobile phone', { lead });
-        //   return;
-        // }
-        // lead.mobilePhone = lead.mobilePhone+"";
-        // lead.mobilePhone = lead.mobilePhone.replace(/\s/g, '');
-        // if (
-        //   !lead.mobilePhone.startsWith('+91') &&
-        //   lead.mobilePhone.length === 10
-        // ) {
-        //   lead.mobilePhone = '+91' + lead.mobilePhone;
-        // }
+        if (!lead.mobilePhone) {
+          console.log('No mobile phone', { lead });
+          return;
+        }
+        lead.mobilePhone = lead.mobilePhone+"";
+        lead.mobilePhone = lead.mobilePhone.replace(/\s/g, '');
+        if (
+          !lead.mobilePhone.startsWith('+91') &&
+          lead.mobilePhone.length === 10
+        ) {
+          lead.mobilePhone = '+91' + lead.mobilePhone;
+        }
         uniqueAttr.uniqueCols.forEach(col => {
           findByQuery[col] = lead[col];
         });
@@ -219,23 +215,14 @@ export class LeadService {
           },
         });
       } catch (e) {
+        console.log("lead received: ", lead)
         this.logger.debug(e);
       }
     })
 
     console.log({ bulkOps: JSON.stringify(bulkOps) });
     const response = await this.leadModel.bulkWrite(bulkOps);
-    console.log(response);
-    this.logger.log(response);
-    // if (lastErrorObject.updatedExisting === true) {
-    //   updated.push(value);
-    // } else if (lastErrorObject.upserted) {
-    //   created.push(value);
-    // } else {
-    //   error.push(value);
-    // }
-
-    // createExcel files and update them to aws and then store the urls in database with AdminActions
+    this.logger.debug(response);
     const created_ws = utils.json_to_sheet(created);
     const updated_ws = utils.json_to_sheet(updated);
 
