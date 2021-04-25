@@ -19,6 +19,7 @@ const upload_service_1 = require("./upload.service");
 const push_notification_service_1 = require("./push-notification.service");
 const sendMail_1 = require("../utils/sendMail");
 const alerts_gateway_1 = require("../socks/alerts.gateway");
+const user_schema_1 = require("../user/schemas/user.schema");
 let LeadModule = class LeadModule {
 };
 LeadModule = __decorate([
@@ -29,6 +30,7 @@ LeadModule = __decorate([
             }),
             mongoose_1.MongooseModule.forFeature([
                 { name: "Campaign", schema: campaign_schema_1.CampaignSchema },
+                { name: "User", schema: user_schema_1.UserSchema },
                 { name: "CampaignConfig", schema: campaign_config_schema_1.CampaignConfigSchema },
                 { name: "Lead", schema: lead_schema_1.LeadSchema },
                 { name: "AdminAction", schema: admin_action_schema_1.AdminActionSchema },

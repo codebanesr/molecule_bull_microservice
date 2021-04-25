@@ -10,6 +10,7 @@ import { UploadService } from "./upload.service";
 import { PushNotificationService } from "./push-notification.service";
 import { EmailService } from "../utils/sendMail";
 import { AlertsGateway } from "../socks/alerts.gateway";
+import { UserSchema } from "../user/schemas/user.schema";
 
 
 @Module({
@@ -19,6 +20,7 @@ import { AlertsGateway } from "../socks/alerts.gateway";
     }),
     MongooseModule.forFeature([
       { name: "Campaign", schema: CampaignSchema },
+      { name: "User", schema: UserSchema },
       { name: "CampaignConfig", schema: CampaignConfigSchema },
       { name: "Lead", schema: LeadSchema },
       { name: "AdminAction", schema: AdminActionSchema },

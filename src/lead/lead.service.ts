@@ -18,8 +18,7 @@ import { UploadService } from './upload.service';
 import { PushNotificationService } from './push-notification.service';
 import { EmailService } from '../utils/sendMail';
 import { AlertsGateway } from '../socks/alerts.gateway';
-import { UserActivityDto } from 'src/user/dto/user-activity.dto';
-import { isMobilePhone } from 'class-validator';
+import { User } from '../user/interfaces/user.interface';
 
 interface LeadFileUpload {
   files: S3UploadedFiles[];
@@ -44,6 +43,9 @@ export class LeadService {
 
     @InjectModel('Campaign')
     private readonly campaignModel: Model<Campaign>,
+
+    @InjectModel('User')
+    private readonly userModel: Model<User>,
 
     private readonly s3UploadService: UploadService,
 
@@ -170,31 +172,51 @@ export class LeadService {
     const updated = [];
     const error = [];
 
-    // const leadMappings = keyBy(leadColumns, "internalField");
+    // handlers in organization
+    const handlers = await this.userModel
+      .find({ organization, roleType:{$ne: 'admin'} }, { email: 1 })
+      .lean()
+      .exec();
+
+    const handlerEmails = handlers.map(h=>h.email);
+    console.log("handlers in the organization", handlerEmails);
+
+    
+    const mobileObjs = await this.campaignConfigModel.find({type: 'tel'}).lean().exec();
+    const mobileKeys = mobileObjs.map(m=>m.internalField);
     const bulkOps = [];
 
     leads.forEach(lead=>{
       try {
         let findByQuery = {};
 
+        // the handler email provided here doesnot match any user in the organization
+        if(!handlerEmails.includes(lead.email)) {
+          delete lead.email;
+        }else{
+          this.logger.debug("Found this lead with assigned user", lead.firstName);
+        }
         if (!lead.mobilePhone) {
-          console.log('No mobile phone', { lead });
+          console.log('No mobile phone provided for lead', { lead });
           return;
         }
-        lead.mobilePhone = lead.mobilePhone+"";
-        lead.mobilePhone = lead.mobilePhone.replace(/\s/g, '');
-        if (
-          !lead.mobilePhone.startsWith('+91') &&
-          lead.mobilePhone.length === 10
-        ) {
-          lead.mobilePhone = '+91' + lead.mobilePhone;
-        }
+
+        mobileKeys.forEach(mkey=>{
+          // convert them to string if not already
+          lead[mkey] = lead[mkey]+"";
+          lead[mkey] = lead[mkey].replace(/\s/g, '');
+          if (
+            !lead[mkey].startsWith('+91') &&
+            lead[mkey].length === 10
+          ) {
+            lead[mkey] = '+91' + lead[mkey];
+          }
+        });
+
         uniqueAttr.uniqueCols.forEach(col => {
           findByQuery[col] = lead[col];
         });
         findByQuery['campaignId'] = campaignId;
-
-        this.logger.debug(findByQuery);
 
         // preventing from mongoose trying to update unique keys
         Object.keys(findByQuery).forEach(key => {
@@ -214,13 +236,12 @@ export class LeadService {
           },
         });
       } catch (e) {
-        console.log("lead received: ", lead)
+        console.log("lead with error : ", lead)
         this.logger.debug(e);
       }
     })
 
-    console.log({ bulkOps: JSON.stringify(bulkOps) });
-    const response = await this.leadModel.bulkWrite(bulkOps);
+    const response = await this.leadModel.bulkWrite(bulkOps, {ordered: false});
     this.logger.debug(response);
     const created_ws = utils.json_to_sheet(created);
     const updated_ws = utils.json_to_sheet(updated);

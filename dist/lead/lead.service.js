@@ -27,13 +27,13 @@ const upload_service_1 = require("./upload.service");
 const push_notification_service_1 = require("./push-notification.service");
 const sendMail_1 = require("../utils/sendMail");
 const alerts_gateway_1 = require("../socks/alerts.gateway");
-const user_activity_dto_1 = require("../user/dto/user-activity.dto");
 let LeadService = LeadService_1 = class LeadService {
-    constructor(leadModel, adminActionModel, campaignConfigModel, campaignModel, s3UploadService, pushNotificationService, emailService, alertsGateway) {
+    constructor(leadModel, adminActionModel, campaignConfigModel, campaignModel, userModel, s3UploadService, pushNotificationService, emailService, alertsGateway) {
         this.leadModel = leadModel;
         this.adminActionModel = adminActionModel;
         this.campaignConfigModel = campaignConfigModel;
         this.campaignModel = campaignModel;
+        this.userModel = userModel;
         this.s3UploadService = s3UploadService;
         this.pushNotificationService = pushNotificationService;
         this.emailService = emailService;
@@ -93,25 +93,40 @@ let LeadService = LeadService_1 = class LeadService {
         const created = [];
         const updated = [];
         const error = [];
+        const handlers = await this.userModel
+            .find({ organization, roleType: { $ne: 'admin' } }, { email: 1 })
+            .lean()
+            .exec();
+        const handlerEmails = handlers.map(h => h.email);
+        console.log("handlers in the organization", handlerEmails);
+        const mobileObjs = await this.campaignConfigModel.find({ type: 'tel' }).lean().exec();
+        const mobileKeys = mobileObjs.map(m => m.internalField);
         const bulkOps = [];
         leads.forEach(lead => {
             try {
                 let findByQuery = {};
+                if (!handlerEmails.includes(lead.email)) {
+                    delete lead.email;
+                }
+                else {
+                    this.logger.debug("Found this lead with assigned user", lead.firstName);
+                }
                 if (!lead.mobilePhone) {
-                    console.log('No mobile phone', { lead });
+                    console.log('No mobile phone provided for lead', { lead });
                     return;
                 }
-                lead.mobilePhone = lead.mobilePhone + "";
-                lead.mobilePhone = lead.mobilePhone.replace(/\s/g, '');
-                if (!lead.mobilePhone.startsWith('+91') &&
-                    lead.mobilePhone.length === 10) {
-                    lead.mobilePhone = '+91' + lead.mobilePhone;
-                }
+                mobileKeys.forEach(mkey => {
+                    lead[mkey] = lead[mkey] + "";
+                    lead[mkey] = lead[mkey].replace(/\s/g, '');
+                    if (!lead[mkey].startsWith('+91') &&
+                        lead[mkey].length === 10) {
+                        lead[mkey] = '+91' + lead[mkey];
+                    }
+                });
                 uniqueAttr.uniqueCols.forEach(col => {
                     findByQuery[col] = lead[col];
                 });
                 findByQuery['campaignId'] = campaignId;
-                this.logger.debug(findByQuery);
                 Object.keys(findByQuery).forEach(key => {
                     delete lead[key];
                 });
@@ -126,12 +141,11 @@ let LeadService = LeadService_1 = class LeadService {
                 });
             }
             catch (e) {
-                console.log("lead received: ", lead);
+                console.log("lead with error : ", lead);
                 this.logger.debug(e);
             }
         });
-        console.log({ bulkOps: JSON.stringify(bulkOps) });
-        const response = await this.leadModel.bulkWrite(bulkOps);
+        const response = await this.leadModel.bulkWrite(bulkOps, { ordered: false });
         this.logger.debug(response);
         const created_ws = xlsx_1.utils.json_to_sheet(created);
         const updated_ws = xlsx_1.utils.json_to_sheet(updated);
@@ -219,7 +233,9 @@ LeadService = LeadService_1 = __decorate([
     __param(1, mongoose_1.InjectModel('AdminAction')),
     __param(2, mongoose_1.InjectModel('CampaignConfig')),
     __param(3, mongoose_1.InjectModel('Campaign')),
+    __param(4, mongoose_1.InjectModel('User')),
     __metadata("design:paramtypes", [mongoose_2.Model,
+        mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,
         mongoose_2.Model,
