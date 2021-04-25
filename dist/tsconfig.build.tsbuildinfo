@@ -4007,8 +4007,8 @@
         "affectsGlobalScope": false
       },
       "../src/lead/lead.service.ts": {
-        "version": "d42246c084f41275fa9a184eacba865c5ad238760577726e4eaf75053ae781cb",
-        "signature": "5b57d759b751f509c6f042efa31dc0500632fc9633d72c6e8e8955d86cf8cb7c",
+        "version": "69370bdda9e78b465bc32d918520b66c528bc0819a756b5f4946e14085f64ea6",
+        "signature": "e2f8345f38fd7bc3460259f7c108251f566b7864475a6d5b9ca4e1174508ac55",
         "affectsGlobalScope": false
       },
       "../node_modules/@types/validator/index.d.ts": {
@@ -13260,6 +13260,7 @@
       "../src/lead/lead.service.ts": [
         "../node_modules/@nestjs/common/index.d.ts",
         "../node_modules/@nestjs/mongoose/index.d.ts",
+        "../node_modules/@types/mongodb/index.d.ts",
         "../node_modules/@types/mongoose/index.d.ts",
         "../node_modules/mongoose/index.d.ts",
         "../node_modules/xlsx/types/index.d.ts",

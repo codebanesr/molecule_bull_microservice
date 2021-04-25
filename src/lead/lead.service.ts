@@ -19,6 +19,7 @@ import { PushNotificationService } from './push-notification.service';
 import { EmailService } from '../utils/sendMail';
 import { AlertsGateway } from '../socks/alerts.gateway';
 import { User } from '../user/interfaces/user.interface';
+import mongodb from 'mongodb';
 
 interface LeadFileUpload {
   files: S3UploadedFiles[];
@@ -241,20 +242,7 @@ export class LeadService {
       }
     })
 
-    const response = await this.leadModel.bulkWrite(bulkOps, {ordered: false});
-    this.logger.debug(response);
-    const created_ws = utils.json_to_sheet(created);
-    const updated_ws = utils.json_to_sheet(updated);
-
-    const wb = utils.book_new();
-    utils.book_append_sheet(wb, updated_ws, 'updated leads');
-    utils.book_append_sheet(wb, created_ws, 'created leads');
-
-    // writeFile(wb, originalFileName + "_system");
-    const wbOut = write(wb, {
-      bookType: 'xlsx',
-      type: 'buffer',
-    });
+    const wbOut = await this.generateExcelFileFromBulkResponse(bulkOps);
 
     const fileName = `result-${originalFileName}`;
     this.logger.debug('Generated result file and store it to ', fileName);
@@ -301,6 +289,53 @@ export class LeadService {
         },
       );
     return result;
+  }
+
+
+  async generateExcelFileFromBulkResponse(bulkOps: any[]) {
+    let response: mongodb.BulkWriteOpResultObject;
+    let errorObjs = [{}];
+    try {
+      response = await this.leadModel.bulkWrite(bulkOps, {ordered: false});
+    }catch(e) {
+      errorObjs = e.writeErrors.map(({errmsg, code, errInfo})=>{
+        return { errmsg, code, errInfo };
+      })
+    }
+
+    const insertedIds = Object.values(response.insertedIds);
+    const upsertedIds = Object.values(response.upsertedIds);
+
+    console.log({insertedIds, upsertedIds})
+    const createdObjs = insertedIds
+      ? await this.leadModel
+          .find({ _id: { $in: insertedIds } })
+          .lean()
+          .exec()
+      : [];
+    const upsertedObjs = upsertedIds
+      ? await this.leadModel
+          .find({ _id: { $in: upsertedIds } })
+          .lean()
+          .exec()
+      : [];
+    
+    const created_ws = utils.json_to_sheet(createdObjs);
+    const updated_ws = utils.json_to_sheet(upsertedObjs);
+    const error_ws = utils.json_to_sheet(errorObjs);
+
+    const wb = utils.book_new();
+    utils.book_append_sheet(wb, updated_ws, 'updated leads');
+    utils.book_append_sheet(wb, created_ws, 'created leads');
+    utils.book_append_sheet(wb, error_ws, 'error leads');
+
+    // writeFile(wb, originalFileName + "_system");
+    const wbOut = write(wb, {
+      bookType: 'xlsx',
+      type: 'buffer',
+    });
+
+    return wbOut;
   }
 
   /**

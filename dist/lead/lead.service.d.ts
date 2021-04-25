@@ -37,6 +37,7 @@ export declare class LeadService {
     }>;
     parseLeadFiles(files: S3UploadedFiles[], ccnfg: IConfig[], campaignName: string, organization: string, uploader: string, uploaderId: string, pushtoken: string, campaignId: string, uniqueAttr: Partial<Campaign>): Promise<void>;
     saveLeadsFromExcel(leads: Lead[], campaignName: string, originalFileName: string, organization: string, uploader: string, uploaderId: string, pushtoken: any, campaignId: string, uniqueAttr: Partial<Campaign>): Promise<any>;
+    generateExcelFileFromBulkResponse(bulkOps: any[]): Promise<any>;
     distributeLeads(campaign: string, assignees: string[]): Promise<void>;
 }
 export {};

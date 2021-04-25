@@ -145,17 +145,7 @@ let LeadService = LeadService_1 = class LeadService {
                 this.logger.debug(e);
             }
         });
-        const response = await this.leadModel.bulkWrite(bulkOps, { ordered: false });
-        this.logger.debug(response);
-        const created_ws = xlsx_1.utils.json_to_sheet(created);
-        const updated_ws = xlsx_1.utils.json_to_sheet(updated);
-        const wb = xlsx_1.utils.book_new();
-        xlsx_1.utils.book_append_sheet(wb, updated_ws, 'updated leads');
-        xlsx_1.utils.book_append_sheet(wb, created_ws, 'created leads');
-        const wbOut = xlsx_1.write(wb, {
-            bookType: 'xlsx',
-            type: 'buffer',
-        });
+        const wbOut = await this.generateExcelFileFromBulkResponse(bulkOps);
         const fileName = `result-${originalFileName}`;
         this.logger.debug('Generated result file and store it to ', fileName);
         const result = await this.s3UploadService.uploadFileBuffer(fileName, wbOut);
@@ -194,6 +184,45 @@ let LeadService = LeadService_1 = class LeadService {
             this.logger.error('Failed to notified user about file upload');
         });
         return result;
+    }
+    async generateExcelFileFromBulkResponse(bulkOps) {
+        let response;
+        let errorObjs = [{}];
+        try {
+            response = await this.leadModel.bulkWrite(bulkOps, { ordered: false });
+        }
+        catch (e) {
+            errorObjs = e.writeErrors.map(({ errmsg, code, errInfo }) => {
+                return { errmsg, code, errInfo };
+            });
+        }
+        const insertedIds = Object.values(response.insertedIds);
+        const upsertedIds = Object.values(response.upsertedIds);
+        console.log({ insertedIds, upsertedIds });
+        const createdObjs = insertedIds
+            ? await this.leadModel
+                .find({ _id: { $in: insertedIds } })
+                .lean()
+                .exec()
+            : [];
+        const upsertedObjs = upsertedIds
+            ? await this.leadModel
+                .find({ _id: { $in: upsertedIds } })
+                .lean()
+                .exec()
+            : [];
+        const created_ws = xlsx_1.utils.json_to_sheet(createdObjs);
+        const updated_ws = xlsx_1.utils.json_to_sheet(upsertedObjs);
+        const error_ws = xlsx_1.utils.json_to_sheet(errorObjs);
+        const wb = xlsx_1.utils.book_new();
+        xlsx_1.utils.book_append_sheet(wb, updated_ws, 'updated leads');
+        xlsx_1.utils.book_append_sheet(wb, created_ws, 'created leads');
+        xlsx_1.utils.book_append_sheet(wb, error_ws, 'error leads');
+        const wbOut = xlsx_1.write(wb, {
+            bookType: 'xlsx',
+            type: 'buffer',
+        });
+        return wbOut;
     }
     async distributeLeads(campaign, assignees) {
         const totalLeads = await this.leadModel
