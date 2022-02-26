@@ -20,10 +20,11 @@ let UploadService = class UploadService {
             secretAccessKey: config_1.default.s3.secretAccessKey,
             region: config_1.default.s3.region,
         });
+        this.bucketName = "applesaucecrm";
     }
     async uploadFile(key, file) {
         const params = {
-            Bucket: "molecule.static.files",
+            Bucket: this.bucketName,
             Key: key + file.name,
             Body: file,
         };
@@ -38,7 +39,7 @@ let UploadService = class UploadService {
     }
     async uploadFileBuffer(key, fileBuffer) {
         const params = {
-            Bucket: "molecule.static.files",
+            Bucket: this.bucketName,
             Key: key,
             Body: fileBuffer,
         };

@@ -183,6 +183,8 @@ export class LeadService {
         if(!lead.mobilePhone) {
           continue;
         }
+        // excel file can send a number as well for mobile phone, so i am converting them to string
+        lead.mobilePhone +="";
         lead.mobilePhone = lead.mobilePhone.replace(/\s/g, "");
         if(!lead.mobilePhone.startsWith("+91") && lead.mobilePhone.length === 10) {
           lead.mobilePhone = "+91"+lead.mobilePhone;

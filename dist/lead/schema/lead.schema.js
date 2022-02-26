@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LeadSchema = void 0;
 const mongoose_1 = require("mongoose");
-const validator_1 = require("validator");
 exports.LeadSchema = new mongoose_1.Schema({
     externalId: { type: String },
     email: String,
@@ -34,9 +33,7 @@ exports.LeadSchema = new mongoose_1.Schema({
     organization: { type: mongoose_1.Schema.Types.ObjectId, ref: "Organization" },
     documentLinks: [String],
     mobilePhone: {
-        type: String,
-        unique: true,
-        validate: validator_1.default.isMobilePhone,
+        type: String
     },
     isPristine: {
         type: Boolean,

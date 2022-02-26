@@ -101,6 +101,10 @@ let LeadService = LeadService_1 = class LeadService {
                     }
                 });
                 let findByQuery = {};
+                if (!lead.mobilePhone) {
+                    continue;
+                }
+                lead.mobilePhone += "";
                 lead.mobilePhone = lead.mobilePhone.replace(/\s/g, "");
                 if (!lead.mobilePhone.startsWith("+91") && lead.mobilePhone.length === 10) {
                     lead.mobilePhone = "+91" + lead.mobilePhone;

@@ -11,10 +11,10 @@ export class UploadService {
   });
 
   constructor() {}
-
+  bucketName = "applesaucecrm";
   async uploadFile(key: string, file: any) {
     const params = {
-      Bucket: "molecule.static.files",
+      Bucket: this.bucketName,
       Key: key + file.name,
       Body: file,
     };
@@ -32,7 +32,7 @@ export class UploadService {
 
   async uploadFileBuffer(key: string, fileBuffer: Buffer): Promise<any> {
     const params = {
-      Bucket: "molecule.static.files",
+      Bucket: this.bucketName,
       Key: key,
       Body: fileBuffer,
     };
