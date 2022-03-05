@@ -28,6 +28,7 @@ interface LeadFileUpload {
   organization: string;
   userId: string;
   pushtoken: any;
+  firebaseToken?: string;
   campaignId: string;
 }
 @Injectable()
@@ -101,7 +102,7 @@ export class LeadService {
       filePath: data.files[0].Location,
       savedOn: 's3',
       campaign: data.campaignId,
-      fileType: 'lead',
+      fileType: 'lead'
     });
 
     this.logger.debug('Saving this action to adminActions model');
@@ -115,7 +116,8 @@ export class LeadService {
       data.userId,
       data.pushtoken,
       data.campaignId,
-      uniqueAttr
+      uniqueAttr,
+      data.firebaseToken
     );
 
     this.logger.debug('Lead files parsed successfully');
@@ -133,6 +135,7 @@ export class LeadService {
     pushtoken: string,
     campaignId: string,
     uniqueAttr: Partial<Campaign>,
+    firebaseToken?: string
   ) {
     this.alertsGateway.sendMessageToClient({
       room: uploader,
@@ -150,6 +153,7 @@ export class LeadService {
         pushtoken,
         campaignId,
         uniqueAttr,
+        firebaseToken
       );
     });
   }
@@ -164,6 +168,7 @@ export class LeadService {
     pushtoken,
     campaignId: string,
     uniqueAttr: Partial<Campaign>,
+    firebaseToken?: string
   ) {
     const created = [];
     const updated = [];
@@ -179,7 +184,7 @@ export class LeadService {
           }
         });
 
-        let findByQuery = {};
+        const findByQuery = {};
         if(!lead.mobilePhone) {
           continue;
         }
@@ -238,14 +243,20 @@ export class LeadService {
 
     const fileName = `result-${originalFileName}`;
     this.logger.debug('Generated result file and store it to ', fileName);
-    const result = await this.s3UploadService.uploadFileBuffer(fileName, wbOut);
-    this.emailService.sendMail({
-      to: uploader,
-      subject: 'Lead file Results have been uploaded',
-      text: `You can find a copy of your lead output file here: ${result.Location}`,
+    const result = await this.s3UploadService.uploadFileBuffer(fileName, wbOut).catch(e =>{
+      this.logger.debug("failed to upload file to s3")
     });
-
     this.logger.error('Uploaded result file to s3');
+
+    try {
+      this.emailService.sendMail({
+        to: uploader,
+        subject: 'Lead file Results have been uploaded',
+        text: `You can find a copy of your lead output file here: ${result.Location}`,
+      });
+    } catch(e) {
+      this.logger.debug(e.message);
+    }
 
     await this.adminActionModel.create({
       userid: uploaderId,
@@ -262,7 +273,23 @@ export class LeadService {
       text: 'Your file has been successfully uploaded',
     });
 
-    this.pushNotificationService
+    this.logger.debug("Firebase token", firebaseToken);
+    if(firebaseToken) {
+      await this.pushNotificationService.sendPNToMobileDevice(firebaseToken, {
+        data: {
+          icon: "https://cdn3.vectorstock.com/i/1000x1000/94/72/cute-black-cat-icon-vector-13499472.jpg",
+          badge: `https://e7.pngegg.com/pngimages/564/873/png-clipart-computer-icons-education-molecule-icon-structure-area.png`,
+        },
+        notification: {
+          title: "File Uploaded",
+          body: `Please visit ${result.Location} for the result`
+        }
+      }).catch(e => {
+        this.logger.debug(e)
+      });
+    }
+
+    await this.pushNotificationService
       .sendPushNotification(pushtoken, {
         notification: {
           title: 'File Upload Complete',
@@ -271,15 +298,9 @@ export class LeadService {
           tag: 'some random tag',
           badge: `https://e7.pngegg.com/pngimages/564/873/png-clipart-computer-icons-education-molecule-icon-structure-area.png`,
         },
-      })
-      .then(
-        result => {
-          this.logger.verbose('successfully notified user');
-        },
-        error => {
-          this.logger.error('Failed to notified user about file upload');
-        },
-      );
+      });
+
+    Logger.debug("Sent push notifications to mobile and web");
     return result;
   }
 

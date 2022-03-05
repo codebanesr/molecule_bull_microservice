@@ -71,24 +71,24 @@ let LeadService = LeadService_1 = class LeadService {
             filePath: data.files[0].Location,
             savedOn: 's3',
             campaign: data.campaignId,
-            fileType: 'lead',
+            fileType: 'lead'
         });
         this.logger.debug('Saving this action to adminActions model');
-        const result = await this.parseLeadFiles(data.files, ccnfg, data.campaignName, data.organization, data.uploader, data.userId, data.pushtoken, data.campaignId, uniqueAttr);
+        const result = await this.parseLeadFiles(data.files, ccnfg, data.campaignName, data.organization, data.uploader, data.userId, data.pushtoken, data.campaignId, uniqueAttr, data.firebaseToken);
         this.logger.debug('Lead files parsed successfully');
         return { files: data.files, result };
     }
-    async parseLeadFiles(files, ccnfg, campaignName, organization, uploader, uploaderId, pushtoken, campaignId, uniqueAttr) {
+    async parseLeadFiles(files, ccnfg, campaignName, organization, uploader, uploaderId, pushtoken, campaignId, uniqueAttr, firebaseToken) {
         this.alertsGateway.sendMessageToClient({
             room: uploader,
             text: 'Received file for processing',
         });
         files.forEach(async (file) => {
             const jsonRes = await parseExcel_1.default(file.Location, ccnfg);
-            await this.saveLeadsFromExcel(jsonRes, campaignName, file.Key, organization, uploader, uploaderId, pushtoken, campaignId, uniqueAttr);
+            await this.saveLeadsFromExcel(jsonRes, campaignName, file.Key, organization, uploader, uploaderId, pushtoken, campaignId, uniqueAttr, firebaseToken);
         });
     }
-    async saveLeadsFromExcel(leads, campaignName, originalFileName, organization, uploader, uploaderId, pushtoken, campaignId, uniqueAttr) {
+    async saveLeadsFromExcel(leads, campaignName, originalFileName, organization, uploader, uploaderId, pushtoken, campaignId, uniqueAttr, firebaseToken) {
         const created = [];
         const updated = [];
         const error = [];
@@ -100,7 +100,7 @@ let LeadService = LeadService_1 = class LeadService {
                         delete lead[lk];
                     }
                 });
-                let findByQuery = {};
+                const findByQuery = {};
                 if (!lead.mobilePhone) {
                     continue;
                 }
@@ -146,13 +146,20 @@ let LeadService = LeadService_1 = class LeadService {
         });
         const fileName = `result-${originalFileName}`;
         this.logger.debug('Generated result file and store it to ', fileName);
-        const result = await this.s3UploadService.uploadFileBuffer(fileName, wbOut);
-        this.emailService.sendMail({
-            to: uploader,
-            subject: 'Lead file Results have been uploaded',
-            text: `You can find a copy of your lead output file here: ${result.Location}`,
+        const result = await this.s3UploadService.uploadFileBuffer(fileName, wbOut).catch(e => {
+            this.logger.debug("failed to upload file to s3");
         });
         this.logger.error('Uploaded result file to s3');
+        try {
+            this.emailService.sendMail({
+                to: uploader,
+                subject: 'Lead file Results have been uploaded',
+                text: `You can find a copy of your lead output file here: ${result.Location}`,
+            });
+        }
+        catch (e) {
+            this.logger.debug(e.message);
+        }
         await this.adminActionModel.create({
             userid: uploaderId,
             organization,
@@ -166,7 +173,22 @@ let LeadService = LeadService_1 = class LeadService {
             room: uploader,
             text: 'Your file has been successfully uploaded',
         });
-        this.pushNotificationService
+        this.logger.debug("Firebase token", firebaseToken);
+        if (firebaseToken) {
+            await this.pushNotificationService.sendPNToMobileDevice(firebaseToken, {
+                data: {
+                    icon: "https://cdn3.vectorstock.com/i/1000x1000/94/72/cute-black-cat-icon-vector-13499472.jpg",
+                    badge: `https://e7.pngegg.com/pngimages/564/873/png-clipart-computer-icons-education-molecule-icon-structure-area.png`,
+                },
+                notification: {
+                    title: "File Uploaded",
+                    body: `Please visit ${result.Location} for the result`
+                }
+            }).catch(e => {
+                this.logger.debug(e);
+            });
+        }
+        await this.pushNotificationService
             .sendPushNotification(pushtoken, {
             notification: {
                 title: 'File Upload Complete',
@@ -175,12 +197,8 @@ let LeadService = LeadService_1 = class LeadService {
                 tag: 'some random tag',
                 badge: `https://e7.pngegg.com/pngimages/564/873/png-clipart-computer-icons-education-molecule-icon-structure-area.png`,
             },
-        })
-            .then(result => {
-            this.logger.verbose('successfully notified user');
-        }, error => {
-            this.logger.error('Failed to notified user about file upload');
         });
+        common_1.Logger.debug("Sent push notifications to mobile and web");
         return result;
     }
     async distributeLeads(campaign, assignees) {

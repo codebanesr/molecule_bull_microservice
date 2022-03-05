@@ -16,6 +16,7 @@ interface LeadFileUpload {
     organization: string;
     userId: string;
     pushtoken: any;
+    firebaseToken?: string;
     campaignId: string;
 }
 export declare class LeadService {
@@ -33,8 +34,8 @@ export declare class LeadService {
         files: S3UploadedFiles[];
         result: void;
     }>;
-    parseLeadFiles(files: S3UploadedFiles[], ccnfg: IConfig[], campaignName: string, organization: string, uploader: string, uploaderId: string, pushtoken: string, campaignId: string, uniqueAttr: Partial<Campaign>): Promise<void>;
-    saveLeadsFromExcel(leads: Lead[], campaignName: string, originalFileName: string, organization: string, uploader: string, uploaderId: string, pushtoken: any, campaignId: string, uniqueAttr: Partial<Campaign>): Promise<any>;
+    parseLeadFiles(files: S3UploadedFiles[], ccnfg: IConfig[], campaignName: string, organization: string, uploader: string, uploaderId: string, pushtoken: string, campaignId: string, uniqueAttr: Partial<Campaign>, firebaseToken?: string): Promise<void>;
+    saveLeadsFromExcel(leads: Lead[], campaignName: string, originalFileName: string, organization: string, uploader: string, uploaderId: string, pushtoken: any, campaignId: string, uniqueAttr: Partial<Campaign>, firebaseToken?: string): Promise<any>;
     distributeLeads(campaign: string, assignees: string[]): Promise<void>;
 }
 export {};

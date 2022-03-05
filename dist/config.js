@@ -51,6 +51,9 @@ exports.default = {
         REDIS_PASSWORD: process.env.BULL_REDIS_PASSWORD,
         REDIS_URL: process.env.BULL_REDIS_URL,
         REDIS_PORT: process.env.BULL_REDIS_PORT,
+    },
+    firebase: {
+        serverKey: "AAAAT75E6Vw:APA91bFVbVRWnUbGQ0HYu8D3BVJxkZdza20shuv7nfHVvKhWP_W0MhuxugcLKI_IAs83QiVRQiLfRFDyT8F7lCnqqG1c4t8k702QLbNs7ozqC_OWo9aajgTIs3P4zMeyHZvchDJYhdHu"
     }
 };
 //# sourceMappingURL=config.js.map

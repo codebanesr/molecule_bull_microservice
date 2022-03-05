@@ -11,4 +11,4 @@ COPY . .
 EXPOSE 3000
 
 RUN ls -sail
-CMD [ "yarn", "start:prod" ]
+CMD [ "node", "dist/main.js" ]

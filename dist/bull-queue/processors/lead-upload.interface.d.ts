@@ -12,4 +12,5 @@ export interface FileUploadJob {
     userId: string;
     pushtoken: any;
     campaignId: string;
+    firebaseToken?: string;
 }

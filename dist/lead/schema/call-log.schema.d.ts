@@ -1,2 +1,2 @@
 import { Schema } from "mongoose";
-export declare const CallLogSchema: Schema<import("mongoose").Document<any>, import("mongoose").Model<import("mongoose").Document<any>>, undefined>;
+export declare const CallLogSchema: Schema<import("mongoose").Document<any, any, any>, import("mongoose").Model<import("mongoose").Document<any, any, any>, any, any>, undefined, {}>;
